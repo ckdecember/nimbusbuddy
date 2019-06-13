@@ -3,19 +3,7 @@ Core control module for cloudbuddy
 
 """
 
-
 import boto3
-
-# get AWS credentials
-# get from environment variables
-# check for failure on no-auth
-#Boto3 will check these environment variables for credentials:
-#AWS_ACCESS_KEY_ID
-#The access key for your AWS account.
-#AWS_SECRET_ACCESS_KEY
-#The secret key for your AWS account.
-#AWS_SESSION_TOKEN
-#The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
 
 # this will inherit aws cloud buddy OR we will use a function pointer
 class CloudBuddy:
@@ -28,20 +16,12 @@ class AWSCloudBuddy():
         self.client = boto3.client('ec2')
 
     def listSubnets(self):
-        # gives subnetid, vpcid, ownerid
-        # subnets / vpc / route table, network acl, default subnet
         self.client.describe_subnets()
     
     def listInstances(self):
-        # ec2 = boto3.resource('ec2')
-        # describe_internet_gateways() - lists exissting ones, but not attached ones to subnets
-        
-        # ec2 can get internet gateway - ec2.internetgateway
-        # can check/verify if missing
-        pass
+        self.client.describe_instances()
 
     def listVPCs(self):
-        # vpcs <-> router
         pass
 
     def listUsers(self):
