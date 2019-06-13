@@ -28,8 +28,22 @@ class AWSCloudBuddy():
         self.client = boto3.client('ec2')
 
     def listSubnets(self):
+        # gives subnetid, vpcid, ownerid
+        # subnets / vpc / route table, network acl, default subnet
         self.client.describe_subnets()
     
+    def listInstances(self):
+        # ec2 = boto3.resource('ec2')
+        # describe_internet_gateways() - lists exissting ones, but not attached ones to subnets
+        
+        # ec2 can get internet gateway - ec2.internetgateway
+        # can check/verify if missing
+        pass
+
+    def listVPCs(self):
+        # vpcs <-> router
+        pass
+
     def listUsers(self):
         self.client.list_users()
 
