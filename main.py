@@ -31,4 +31,14 @@ class AWSCloudBuddy():
         self.client.describe_subnets()
     
     def listUsers(self):
-        pass
+        self.client.list_users()
+
+def main():
+    acb = AWSCloudBuddy()
+    subnet = acb.listSubnets()
+
+if  __name__ =='__main__': main()   
+
+
+__version__ = '0.1'
+__author__ = 'Carroll Kong'
