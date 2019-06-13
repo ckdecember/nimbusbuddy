@@ -1,11 +1,39 @@
+Main goals
+- able to connect to AWS and list VPCs, EC2s, Subnets, which EC2 is in which Subnet.  
+- Internet Gateways and VPCs
+
+List VPCs and the EC2's within
+
+describe_instances()
+
+
+
+describe_vpcs()
+this finds all vpcs and cidr block associations (indirectly the subnets are here) 
+
+Gateways for each Subnet - this is good to know you can get out and a common problem.
+
+ec2client
+describe_route_tables 
+
+{'Associations': 
+[{'Main': False, 'RouteTableAssociationId': 'rtbassoc-09ce2b33c614880f7', 'RouteTableId': 'rtb-0f1177d09c33e8660', 'SubnetId': 'subnet-0f1d4c1bb5e7623e5'}], 'PropagatingVgws': [], 
+'RouteTableId': 'rtb-0f1177d09c33e8660', 
+'Routes': 
+[{'DestinationCidrBlock': '10.0.0.0/26', 'GatewayId': 'local', 'Origin': 'CreateRouteTable', 'State': 'active'}, 
+{'DestinationCidrBlock': '0.0.0.0/0', 'GatewayId': 'igw-010d48c5caa390a3d', 'Origin': 'CreateRoute', 'State': 'active'}], 'Tags': [], 'VpcId': 'vpc-0cfd1cd66295ae2e5', 'OwnerId': '823202860115'}, 
+
+populate a dictionary with subnetID is key. value is list of route dicts.
+SubnetID is here, so you can match subnet ID with a list of Routes!!!
+
+
+
 # get AWS credentials
 # get from environment variables
 # check for failure on no-auth
 #Boto3 will check these environment variables for credentials:
 #AWS_ACCESS_KEY_ID
-#The access key for your AWS account.
 #AWS_SECRET_ACCESS_KEY
-#The secret key for your AWS account.
 #AWS_SESSION_TOKEN
 #The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
 
@@ -20,3 +48,6 @@
         # ec2 can get internet gateway - ec2.internetgateway
         # this will need filtering
         self.client.describe_instances()
+
+SIDE FEATURES
+# jenkins as ci/cd.  pretty heavy.
