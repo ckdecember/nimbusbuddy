@@ -170,3 +170,6 @@ SIDE FEATURES
 # jenkins as ci/cd.  pretty heavy.
 # using Docker to package the product
 # 
+
+# unit tests for CI/CD runs
+python3 -m unittest main.py 

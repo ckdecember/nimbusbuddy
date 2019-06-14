@@ -4,6 +4,9 @@ Core control module for cloudbuddy
 """
 
 import boto3
+import botocore
+
+import unittest
 
 # this will inherit aws cloud buddy OR we will use a function pointer
 class CloudBuddy:
@@ -21,7 +24,7 @@ class AWSCloudBuddy():
         self.ec2instances = None
     
     def listSubnets(self):
-        return self.ec2client.describe_subnets()
+        self.ec2client.describe_subnets()
     
     def listInstances(self):
         self.ec2client.describe_instances()
@@ -40,6 +43,7 @@ class AWSCloudBuddy():
 
     def something(self):
         #loop regionlist, and per region, look for ec2 instance?
+        pass
 
 def main():
     acb = AWSCloudBuddy()
