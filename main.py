@@ -4,6 +4,9 @@ Core control module for cloudbuddy
 """
 
 import boto3
+import botocore
+
+import unittest
 
 # this will inherit aws cloud buddy OR we will use a function pointer
 class CloudBuddy:
@@ -21,7 +24,7 @@ class AWSCloudBuddy():
         self.iamusers = None
 
     def listSubnets(self):
-        return self.ec2client.describe_subnets()
+        self.ec2client.describe_subnets()
     
     def listInstances(self):
         self.ec2client.describe_instances()
@@ -32,10 +35,14 @@ class AWSCloudBuddy():
     def listUsers(self):
         self.iamclient.list_users()
 
+class TestCloudBuddy(unittest.TestCase):
+    def test_aws(self):
+        client = boto3.client('ec2')
+        isinstance(client, type(boto3.client))
+
+
 def main():
     acb = AWSCloudBuddy()
-    subnet = acb.listSubnets()
-    print (subnet)
 
 if  __name__ =='__main__': main()   
 

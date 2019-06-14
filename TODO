@@ -51,3 +51,6 @@ SubnetID is here, so you can match subnet ID with a list of Routes!!!
 
 SIDE FEATURES
 # jenkins as ci/cd.  pretty heavy.
+
+# unit tests for CI/CD runs
+python3 -m unittest main.py 
