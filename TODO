@@ -1,6 +1,123 @@
-Main goals
+Main Features
+- powerful Cloud Assistance that lets you
+- visualize 
+- save configurations
+- help restore configurations by piping into terraform 
+- save configurations locally, to be version controlled.
+
+Tech
+- custom data format/json format to restore configurations
+- add support for
+    - VPC
+    - Subnets
+    - EC2 instances 
+    - ELB
+    - EKS (optional)
+    - network acl
+    - security groups
+    - default gateways
+
+structure for ec2s.
+vpc
+subnet
+ec2
+security groups
+default gateway (follows subnet?)
+Elastic IP - scopes to either VPC or EC2??
+
+use a very basic terraform.tf file.  then feed it with variables to parse.
+>>> import hcl
+>>> with open('variables.tf', 'r') as fp:
+...     obj = hcl.load(fp)
+... 
+>>> obj
+{'variable': {'access_key': {'default': 'AKIA37KVWZRJYR5AB4XL'}, 'secret_key': {'default': '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'}, 'region': {'default': 'us-east-2'}, 'security_group': {'default': 'launch-wizard-3'}, 'subnet': {'default': 'subnet-fe8ff784'}}}
+>>> 
+
+subnet': {'default': 'subnet-fe8ff784'}}}
+>>> dir(hcl)
+['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__path__', '__spec__', '__version__', 'api', 'dumps', 'lexer', 'load', 'loads', 'parser', 'version']
+>>> obj.dumps
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'dict' object has no attribute 'dumps'
+>>> hcl.dumps(obj)
+'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
+>>> hcl.dumps(obj)
+'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
+>>> hcl.dumps(obj)
+'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
+>>> dir(hcl.dumps)
+['__annotations__', '__call__', '__class__', '__closure__', '__code__', '__defaults__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__globals__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__kwdefaults__', '__le__', '__lt__', '__module__', '__name__', '__ne__', '__new__', '__qualname__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__']
+>>> hcl.dumps(obj)
+'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
+>>> asdf = hcl.dumps(obj)
+>>> asdf
+'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
+>>> fp2 = open('hclmod.tf', 'w') 
+>>> fp2.write(asdf)
+262
+>>> fp2.close()
+
+
+save these settings if possible
+AWS instantiation toggles
+- ami (amazon machine image) -  'ImageId': 'ami-0c55b159cbfafe1f0',
+- num instances - might be a loop of number of instances within reservations/instances.
+- network vpc context -  'VpcId':
+- subnet normal network - 'SubnetId': 'subnet-fe8ff784'
+- auto assign public ip or not. - CAN'T FIND YET
+- placement group? wtf? - UNKNOWN
+- capacity - yeah, tower. - HMMM
+- iam role - CAN'T FIND ROLE, SO WEIRD
+KeyName - but can't really be used in terra??!?
+- enable termination protection - PROB NOT
+- volume type - VolumeId but this is very specific.
+- tags - seems like custom naming, which is very very handy.
+- security-group - SecurityGroups[ groupname, groupid], tuples
+can you be part of more than one security group?
+
+network ACL 
+a network acl can be applied to more than one subnet
+security group 
+for instances.  can be set in group of instances.
+
+
 - able to connect to AWS and list VPCs, EC2s, Subnets, which EC2 is in which Subnet.  
+- ALSO, parse all regions to check for existing EC2
 - Internet Gateways and VPCs
+
+- get a table of all EC2s in EACH regions
+- find unused security-groups
+- find stale EC2s, and prepare to self destroy
+- estimate costs - warn you on average daily (same as billing?)
+
+- maybe AWS config saves? - hard to do 
+
+- focus more on management
+- turn down instances or turn up 
+
+- quick dashboard
+using tables 
+
+
+
+
+- notes 
+boto3.client works only per region, and must be initialized as such.
+
+result is a webpage which is zipped/tarred up and uploaded somewhere or anywhere.
+you can deploy/test/view it as a webpage for localbrowser OR webserver
+
+- also dumps a large custom config file of sorts.  one that is visualizable.  
+- advantage here is it can be versioned controlled.  you can also replay it back to view your old network
+- could also give suggestions on how to rebuild it ORRRRR use TERRAFORM to rebuild it.
+
+- maybe could be versioned?  but not sure.  i suppose it's just text so it can be more easily stored.
+- this way you can look at old versions of the config dump so to speak.
+
+
+
 
 List VPCs and the EC2's within
 
@@ -51,3 +168,5 @@ SubnetID is here, so you can match subnet ID with a list of Routes!!!
 
 SIDE FEATURES
 # jenkins as ci/cd.  pretty heavy.
+# using Docker to package the product
+# 
