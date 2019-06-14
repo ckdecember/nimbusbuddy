@@ -25,47 +25,12 @@ security groups
 default gateway (follows subnet?)
 Elastic IP - scopes to either VPC or EC2??
 
-use a very basic terraform.tf file.  then feed it with variables to parse.
->>> import hcl
->>> with open('variables.tf', 'r') as fp:
-...     obj = hcl.load(fp)
-... 
->>> obj
-{'variable': {'access_key': {'default': 'AKIA37KVWZRJYR5AB4XL'}, 'secret_key': {'default': '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'}, 'region': {'default': 'us-east-2'}, 'security_group': {'default': 'launch-wizard-3'}, 'subnet': {'default': 'subnet-fe8ff784'}}}
->>> 
-
-subnet': {'default': 'subnet-fe8ff784'}}}
->>> dir(hcl)
-['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__path__', '__spec__', '__version__', 'api', 'dumps', 'lexer', 'load', 'loads', 'parser', 'version']
->>> obj.dumps
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-AttributeError: 'dict' object has no attribute 'dumps'
->>> hcl.dumps(obj)
-'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
->>> hcl.dumps(obj)
-'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
->>> hcl.dumps(obj)
-'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
->>> dir(hcl.dumps)
-['__annotations__', '__call__', '__class__', '__closure__', '__code__', '__defaults__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__globals__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__kwdefaults__', '__le__', '__lt__', '__module__', '__name__', '__ne__', '__new__', '__qualname__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__']
->>> hcl.dumps(obj)
-'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
->>> asdf = hcl.dumps(obj)
->>> asdf
-'{"variable": {"access_key": {"default": "AKIA37KVWZRJYR5AB4XL"}, "secret_key": {"default": "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"}, "region": {"default": "boobobo"}, "security_group": {"default": "launch-wizard-3"}, "subnet": {"default": "subnet-fe8ff784"}}}'
->>> fp2 = open('hclmod.tf', 'w') 
->>> fp2.write(asdf)
-262
->>> fp2.close()
-
-
 save these settings if possible
 AWS instantiation toggles
-- ami (amazon machine image) -  'ImageId': 'ami-0c55b159cbfafe1f0',
+- ami (amazon machine image) -  'ImageId': '',
 - num instances - might be a loop of number of instances within reservations/instances.
 - network vpc context -  'VpcId':
-- subnet normal network - 'SubnetId': 'subnet-fe8ff784'
+- subnet normal network - 'SubnetId': ''
 - auto assign public ip or not. - CAN'T FIND YET
 - placement group? wtf? - UNKNOWN
 - capacity - yeah, tower. - HMMM
@@ -132,13 +97,6 @@ Gateways for each Subnet - this is good to know you can get out and a common pro
 
 ec2client
 describe_route_tables 
-
-{'Associations': 
-[{'Main': False, 'RouteTableAssociationId': 'rtbassoc-09ce2b33c614880f7', 'RouteTableId': 'rtb-0f1177d09c33e8660', 'SubnetId': 'subnet-0f1d4c1bb5e7623e5'}], 'PropagatingVgws': [], 
-'RouteTableId': 'rtb-0f1177d09c33e8660', 
-'Routes': 
-[{'DestinationCidrBlock': '10.0.0.0/26', 'GatewayId': 'local', 'Origin': 'CreateRouteTable', 'State': 'active'}, 
-{'DestinationCidrBlock': '0.0.0.0/0', 'GatewayId': 'igw-010d48c5caa390a3d', 'Origin': 'CreateRoute', 'State': 'active'}], 'Tags': [], 'VpcId': 'vpc-0cfd1cd66295ae2e5', 'OwnerId': '823202860115'}, 
 
 populate a dictionary with subnetID is key. value is list of route dicts.
 SubnetID is here, so you can match subnet ID with a list of Routes!!!
