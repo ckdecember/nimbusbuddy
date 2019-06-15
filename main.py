@@ -17,7 +17,7 @@ class AWSCloudBuddy():
     def __init__(self):
         
         self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
-        #ec2client[regionname] = {}
+        self.ec2clientdict = {}
         self.iamclient = boto3.client('iam')
         # probably not the best data structure for it.
         self.subnets = None
@@ -41,14 +41,19 @@ class AWSCloudBuddy():
         regionlist = [i['RegionName'] for i in fullregionlist['Regions']]
         return regionlist
 
-    def something(self):
-        #loop regionlist, and per region, look for ec2 instance?
-        pass
+    def initRegionList(self):
+        regionList = self.getAllRegions()
+        for region in regionList:
+            self.ec2clientdict[region] = boto3.client('ec2', region_name=region)
 
 def main():
     acb = AWSCloudBuddy()
-    regionlist = acb.getAllRegions()
-    print (regionlist)
+    acb.initRegionList()
+    for key in acb.ec2clientdict.keys():
+        print (key)
+        print (acb.ec2clientdict[key])
+    #regionlist = acb.getAllRegions()
+    #print (regionlist)
 
 if  __name__ =='__main__': main()   
 
