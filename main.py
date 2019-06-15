@@ -15,9 +15,10 @@ class CloudBuddy:
     
 class AWSCloudBuddy():
     def __init__(self):
-        
         self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
         self.ec2clientdict = {}
+        self.initRegionList()
+
         self.iamclient = boto3.client('iam')
         # probably not the best data structure for it.
         self.subnets = None
@@ -46,17 +47,21 @@ class AWSCloudBuddy():
         for region in regionList:
             self.ec2clientdict[region] = boto3.client('ec2', region_name=region)
 
+class TestCloudBuddy(unittest.TestCase):
+    def test_aws(self):
+        client = boto3.client('ec2')
+        isinstance(client, type(boto3.client))
+
 def main():
     acb = AWSCloudBuddy()
-    acb.initRegionList()
-    for key in acb.ec2clientdict.keys():
-        print (key)
-        print (acb.ec2clientdict[key])
+    #acb.initRegionList()
+    #for key in acb.ec2clientdict.keys():
+        #print (key)
+        #print (acb.ec2clientdict[key])
     #regionlist = acb.getAllRegions()
     #print (regionlist)
 
-if  __name__ =='__main__': main()   
-
+if  __name__ =='__main__': main()
 
 __version__ = '0.1'
 __author__ = 'Carroll Kong'
