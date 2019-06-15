@@ -15,8 +15,8 @@ class CloudBuddy:
     
 class AWSCloudBuddy():
     def __init__(self):
-        # for now, assume environment variables are in
-        #self.ec2client = boto3.client('ec2', region_name='us-east-2')
+        
+        self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
         #ec2client[regionname] = {}
         self.iamclient = boto3.client('iam')
         # probably not the best data structure for it.
