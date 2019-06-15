@@ -1,0 +1,133 @@
+Main Features
+- powerful Cloud Assistance that lets you
+- visualize 
+- save configurations
+- help restore configurations by piping into terraform 
+- save configurations locally, to be version controlled.
+
+Tech
+- custom data format/json format to restore configurations
+- add support for
+    - VPC
+    - Subnets
+    - EC2 instances 
+    - ELB
+    - EKS (optional)
+    - network acl
+    - security groups
+    - default gateways
+
+structure for ec2s.
+vpc
+subnet
+ec2
+security groups
+default gateway (follows subnet?)
+Elastic IP - scopes to either VPC or EC2??
+
+save these settings if possible
+AWS instantiation toggles
+- ami (amazon machine image) -  'ImageId': '',
+- num instances - might be a loop of number of instances within reservations/instances.
+- network vpc context -  'VpcId':
+- subnet normal network - 'SubnetId': ''
+- auto assign public ip or not. - CAN'T FIND YET
+- placement group? wtf? - UNKNOWN
+- capacity - yeah, tower. - HMMM
+- iam role - CAN'T FIND ROLE, SO WEIRD
+KeyName - but can't really be used in terra??!?
+- enable termination protection - PROB NOT
+- volume type - VolumeId but this is very specific.
+- tags - seems like custom naming, which is very very handy.
+- security-group - SecurityGroups[ groupname, groupid], tuples
+can you be part of more than one security group?
+
+network ACL 
+a network acl can be applied to more than one subnet
+security group 
+for instances.  can be set in group of instances.
+
+
+- able to connect to AWS and list VPCs, EC2s, Subnets, which EC2 is in which Subnet.  
+- ALSO, parse all regions to check for existing EC2
+- Internet Gateways and VPCs
+
+- get a table of all EC2s in EACH regions
+- find unused security-groups
+- find stale EC2s, and prepare to self destroy
+- estimate costs - warn you on average daily (same as billing?)
+
+- maybe AWS config saves? - hard to do 
+
+- focus more on management
+- turn down instances or turn up 
+
+- quick dashboard
+using tables 
+
+
+
+
+- notes 
+boto3.client works only per region, and must be initialized as such.
+
+result is a webpage which is zipped/tarred up and uploaded somewhere or anywhere.
+you can deploy/test/view it as a webpage for localbrowser OR webserver
+
+- also dumps a large custom config file of sorts.  one that is visualizable.  
+- advantage here is it can be versioned controlled.  you can also replay it back to view your old network
+- could also give suggestions on how to rebuild it ORRRRR use TERRAFORM to rebuild it.
+
+- maybe could be versioned?  but not sure.  i suppose it's just text so it can be more easily stored.
+- this way you can look at old versions of the config dump so to speak.
+
+
+
+
+List VPCs and the EC2's within
+
+describe_instances()
+
+
+
+describe_vpcs()
+this finds all vpcs and cidr block associations (indirectly the subnets are here) 
+
+Gateways for each Subnet - this is good to know you can get out and a common problem.
+
+ec2client
+describe_route_tables 
+
+populate a dictionary with subnetID is key. value is list of route dicts.
+SubnetID is here, so you can match subnet ID with a list of Routes!!!
+
+
+
+# get AWS credentials
+# get from environment variables
+# check for failure on no-auth
+#Boto3 will check these environment variables for credentials:
+#AWS_ACCESS_KEY_ID
+#AWS_SECRET_ACCESS_KEY
+#AWS_SESSION_TOKEN
+#The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
+
+       # gives subnetid, vpcid, ownerid
+        # subnets / vpc / route table, network acl, default subnet
+        self.client.describe_subnets()
+    
+    def listInstances(self):
+        # ec2 = boto3.resource('ec2')
+        # describe_internet_gateways() - lists exissting ones, but not attached ones to subnets
+        
+        # ec2 can get internet gateway - ec2.internetgateway
+        # this will need filtering
+        self.client.describe_instances()
+
+SIDE FEATURES
+# jenkins as ci/cd.  pretty heavy.
+# using Docker to package the product
+# 
+
+# unit tests for CI/CD runs
+python3 -m unittest main.py 
