@@ -27,9 +27,9 @@ class AWSCloudBuddy():
     def listSubnets(self):
         self.ec2client.describe_subnets()
     
-    def listInstances(self):
-        self.ec2client.describe_instances()
-        # 
+    def listInstances(self, region):
+        instances = self.ec2clientdict[region].describe_instances()
+        return instances
 
     def listVPCs(self):
         self.ec2client.describe_vpcs()
@@ -52,8 +52,24 @@ class TestCloudBuddy(unittest.TestCase):
         client = boto3.client('ec2')
         isinstance(client, type(boto3.client))
 
+    def test_aws_regions(self):
+        pass
+
 def main():
     acb = AWSCloudBuddy()
+    #print (acb.listInstances('us-east-2'))
+    regionList = acb.getAllRegions()
+    print ("Start")
+    for region in regionList:
+        print (region)
+        instances = acb.listInstances(region)
+        for instance in instances['Reservations']:
+            # trim this down a bit.
+            print (instance)
+
+
+
+
     #acb.initRegionList()
     #for key in acb.ec2clientdict.keys():
         #print (key)
