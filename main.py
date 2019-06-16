@@ -63,9 +63,14 @@ def main():
     for region in regionList:
         print (region)
         instances = acb.listInstances(region)
-        for instance in instances['Reservations']:
+        for reservation in instances['Reservations']:
+            for reservedInstance in reservation['Instances']:
+                print (reservedInstance.keys())
+                print (reservedInstance['KeyName'])
+                print (reservedInstance['InstanceId'])
+                #print (reservedInstance['InstanceID'])
             # trim this down a bit.
-            print (instance)
+            #print (instance['InstanceId'])
 
 
 
