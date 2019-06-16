@@ -17,12 +17,16 @@ class AWSCloudBuddy():
     def __init__(self):
         self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
         self.ec2clientdict = {}
+        self.dataStruct = {}
         self.initRegionList()
 
         self.iamclient = boto3.client('iam')
         # probably not the best data structure for it.
         self.subnets = None
         self.ec2instances = None
+
+        regionList = self.getAllRegions()
+        self.initDataStruct(regionList)
     
     def listSubnets(self):
         self.ec2client.describe_subnets()
@@ -46,6 +50,27 @@ class AWSCloudBuddy():
         regionList = self.getAllRegions()
         for region in regionList:
             self.ec2clientdict[region] = boto3.client('ec2', region_name=region)
+    
+    def cycleRegionInstances(self):
+        regionList = self.getAllRegions()
+        print ("Start")
+        for region in regionList:
+            print (region)
+            instances = self.listInstances(region)
+            for reservation in instances['Reservations']:
+                for reservedInstance in reservation['Instances']:
+                    #print (reservedInstance)
+                    #print (reservedInstance.keys())
+                    #self.dataStruct[region].append(reservedInstance['InstanceId'])
+                    print (reservedInstance['InstanceId'])
+                    print (reservedInstance['SubnetId'])
+                    #print (reservedInstance['AmiLaunchIndex'])
+                    if 'Tags' in reservedInstance:
+                        print (reservedInstance['Tags'])
+
+    def initDataStruct(self, regionList):
+        for region in regionList:
+            self.dataStruct[region] = []
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -57,20 +82,9 @@ class TestCloudBuddy(unittest.TestCase):
 
 def main():
     acb = AWSCloudBuddy()
+    acb.cycleRegionInstances()
     #print (acb.listInstances('us-east-2'))
-    regionList = acb.getAllRegions()
-    print ("Start")
-    for region in regionList:
-        print (region)
-        instances = acb.listInstances(region)
-        for reservation in instances['Reservations']:
-            for reservedInstance in reservation['Instances']:
-                print (reservedInstance.keys())
-                print (reservedInstance['KeyName'])
-                print (reservedInstance['InstanceId'])
-                #print (reservedInstance['InstanceID'])
-            # trim this down a bit.
-            #print (instance['InstanceId'])
+
 
 
 

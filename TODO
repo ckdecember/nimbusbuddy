@@ -4,6 +4,11 @@ Main Features
 - save configurations
 - help restore configurations by piping into terraform 
 - save configurations locally, to be version controlled.
+- clean up excessive configurations
+    - looks for unused security groups
+    - looks for unused elastic IPs (this will be billed if not discovered)
+- quick diagnostic tool to help people troubleshoot your network
+
 
 Tech
 - custom data format/json format to restore configurations
@@ -66,8 +71,6 @@ for instances.  can be set in group of instances.
 using tables 
 
 
-
-
 - notes 
 boto3.client works only per region, and must be initialized as such.
 
@@ -116,8 +119,6 @@ SubnetID is here, so you can match subnet ID with a list of Routes!!!
         # subnets / vpc / route table, network acl, default subnet
         self.client.describe_subnets()
     
-    def listInstances(self):
-        # ec2 = boto3.resource('ec2')
         # describe_internet_gateways() - lists exissting ones, but not attached ones to subnets
         
         # ec2 can get internet gateway - ec2.internetgateway
@@ -131,3 +132,21 @@ SIDE FEATURES
 
 # unit tests for CI/CD runs
 python3 -m unittest main.py 
+
+
+# keys for ec2 instances deep 
+dict_keys(['AmiLaunchIndex', 'ImageId', 'InstanceId', 'InstanceType', 'KeyName', 
+'LaunchTime', 'Monitoring', 'Placement', 'PrivateDnsName', 'PrivateIpAddress', 
+'ProductCodes', 'PublicDnsName', 'State', 'StateTransitionReason', 'SubnetId', 
+'VpcId', 'Architecture', 'BlockDeviceMappings', 'ClientToken', 'EbsOptimized', 
+'EnaSupport', 'Hypervisor', 'NetworkInterfaces', 'RootDeviceName', 'RootDeviceType', 
+'SecurityGroups', 'SourceDestCheck', 'StateReason', 'VirtualizationType', 'CpuOptions', 
+'CapacityReservationSpecification', 'HibernationOptions'])
+
+#super structure
+EC2 InstanceId, availability zone, current region, VpcID, SubnetID, PrivateIPAddress,
+PublicIpName (if exists), State, PublicDnsName, Tags (variable if they exist or not - these are special custom descriptions)
+
+elastic ips just show up as public ips, PublicIp, PublicIPAddress
+
+
