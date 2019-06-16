@@ -61,12 +61,15 @@ class AWSCloudBuddy():
                 for reservedInstance in reservation['Instances']:
                     #print (reservedInstance)
                     #print (reservedInstance.keys())
-                    #self.dataStruct[region].append(reservedInstance['InstanceId'])
-                    print (reservedInstance['InstanceId'])
-                    print (reservedInstance['SubnetId'])
-                    #print (reservedInstance['AmiLaunchIndex'])
+                    print ("InstanceId {}".format(reservedInstance['InstanceId']))
+                    print ("Subnet {}".format(reservedInstance['SubnetId']))
+                    print ("KeyName {}".format(reservedInstance['KeyName']))
+                    print ("State {}".format(reservedInstance['State']))
+                    print ("Security Groups {}".format(reservedInstance['SecurityGroups']))
+                    if 'Placement' in reservedInstance:
+                        print ("Placement {}".format(reservedInstance['Placement']))
                     if 'Tags' in reservedInstance:
-                        print (reservedInstance['Tags'])
+                        print ("Tags {}".format(reservedInstance['Tags']))
 
     def initDataStruct(self, regionList):
         for region in regionList:
