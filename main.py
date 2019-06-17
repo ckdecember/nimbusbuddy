@@ -72,6 +72,10 @@ class AWSCloudBuddy():
     def initDataStruct(self, regionList):
         for region in regionList:
             self.dataStruct[region] = []
+    
+    def getVPC(self, regionname='us-west-1'):
+        return self.ec2clientdict[regionname].describe_vpcs()
+        #{'Vpcs': [{'CidrBlock': '172.31.0.0/16', 'State': 'available', 'VpcId': 'vpc-db4045bc', 'CidrBlockAssociationSet': [{'AssociationId': 'vpc-cidr-assoc-527b9939', 'CidrBlock': '172.31.0.0/16', 'CidrBlockState': {'State': 'associated'}}], 'IsDefault': True}]
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -84,7 +88,9 @@ class TestCloudBuddy(unittest.TestCase):
 
 def main():
     acb = AWSCloudBuddy()
-    acb.cycleRegionInstances()
+    #acb.cycleRegionInstances()
+    print (acb.getVPC())
+
     #print (acb.listInstances('us-east-2'))
     #acb.initRegionList()
     #for key in acb.ec2clientdict.keys():
