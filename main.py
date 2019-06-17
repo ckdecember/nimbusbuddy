@@ -61,15 +61,14 @@ class AWSCloudBuddy():
                 for reservedInstance in reservation['Instances']:
                     #print (reservedInstance)
                     #print (reservedInstance.keys())
-                    print ("InstanceId {}".format(reservedInstance['InstanceId']))
-                    print ("Subnet {}".format(reservedInstance['SubnetId']))
-                    print ("KeyName {}".format(reservedInstance['KeyName']))
-                    print ("State {}".format(reservedInstance['State']))
-                    print ("Security Groups {}".format(reservedInstance['SecurityGroups']))
-                    if 'Placement' in reservedInstance:
-                        print ("Placement {}".format(reservedInstance['Placement']))
-                    if 'Tags' in reservedInstance:
-                        print ("Tags {}".format(reservedInstance['Tags']))
+                    print ("#####################")
+
+                    instancekeyList = ['InstanceId', 'Subnet', 'KeyName', 
+                        'State', 'SecurityGroups', 'Placement', 'Tags']
+                    for instancekey in instancekeyList:
+                        if instancekey in reservedInstance:
+                            print ("{} {}".format(instancekey, reservedInstance[instancekey]))
+                    print ("#####################")
 
     def initDataStruct(self, regionList):
         for region in regionList:
@@ -80,8 +79,9 @@ class TestCloudBuddy(unittest.TestCase):
         client = boto3.client('ec2')
         isinstance(client, type(boto3.client))
 
-    def test_aws_regions(self):
-        pass
+    #def test_aws_regions(self):
+    #    client = boto3.client('ec2')
+    #    isinstance(client.describe_regions(),type(list))
 
 def main():
     acb = AWSCloudBuddy()
