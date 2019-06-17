@@ -62,7 +62,6 @@ class AWSCloudBuddy():
                     #print (reservedInstance)
                     #print (reservedInstance.keys())
                     print ("#####################")
-
                     instancekeyList = ['InstanceId', 'Subnet', 'KeyName', 
                         'State', 'SecurityGroups', 'Placement', 'Tags']
                     for instancekey in instancekeyList:
@@ -87,11 +86,6 @@ def main():
     acb = AWSCloudBuddy()
     acb.cycleRegionInstances()
     #print (acb.listInstances('us-east-2'))
-
-
-
-
-
     #acb.initRegionList()
     #for key in acb.ec2clientdict.keys():
         #print (key)

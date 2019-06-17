@@ -23,6 +23,9 @@ Tech
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
+# RECORD vpc's CIDR.
+# RECORD subnet's CIDR.
+
 describe_vpcs()
 this finds all vpcs and cidr block associations (indirectly the subnets are here) 
 >>> cli.describe_vpcs()['Vpcs'][0].keys()
@@ -153,3 +156,30 @@ EC2 InstanceId, availability zone, current region, VpcID, SubnetID, PrivateIPAdd
 PublicIpName (if exists), State, PublicDnsName, Tags (variable if they exist or not - these are special custom descriptions)
 
 elastic ips just show up as public ips, PublicIp, PublicIPAddress
+
+# terraform example for reusing existing infrastructure
+# terraform import will not regen configs yet.  hm.  
+# can use custom modules, then reference module by name.  can only access outputted values
+
+# to choose a vpc, choose subnet for instance.  
+# subnets must exist witin a VPC, VPC is a superset
+# RECORD vpc's CIDR.
+# RECORD subnet's CIDR.
+
+variable "ami_id" {
+  description = "AMI ID"
+  default = "ami-xxxxxxxx"
+}
+
+variable "subnet_prv1" {
+  description = "Private Subnet 1"
+  default = "subnet-xxxxxx"
+}
+Then in your main.tf to create the resource:
+
+resource "aws_instance" "example" {
+   instance_type = "t2.micro"
+   ami = "${var.ami_id}"
+   ......
+   subnet_id = "${var.subnet_prv1}"
+}
