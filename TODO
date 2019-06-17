@@ -17,17 +17,36 @@ Tech
     - EC2 instances 
     - ELB
     - EKS (optional)
-    - network acl
     - security groups
     - default gateways
 
-structure for ec2s.
-vpc
-subnet
-ec2
-security groups
-default gateway (follows subnet?)
-Elastic IP - scopes to either VPC or EC2??
+#Visualization
+- VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
+
+describe_vpcs()
+this finds all vpcs and cidr block associations (indirectly the subnets are here) 
+>>> cli.describe_vpcs()['Vpcs'][0].keys()
+dict_keys(['CidrBlock', 'DhcpOptionsId', 'State', 'VpcId', 'OwnerId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'IsDefault', 'Tags'])
+
+# subnets
+cli.describe_subnets()['Subnets'][0].keys()
+dict_keys(['AvailabilityZone', 'AvailabilityZoneId', 'AvailableIpAddressCount', 'CidrBlock', 'DefaultForAz', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'AssignIpv6AddressOnCreation', 'Ipv6CidrBlockAssociationSet', 'Tags', 'SubnetArn'])    
+
+# internet gateways
+cli.describe_internet_gateways()['InternetGateways'][0]['Attachments'] -> this gives VpcID.
+
+#route tables
+>>> cli.describe_route_tables()['RouteTables'][0].keys()
+dict_keys(['Associations', 'PropagatingVgws', 'RouteTableId', 'Routes', 'Tags', 'VpcId', 'OwnerId'])
+ties subnet id, actual destination, and gateway ids, and vpcs
+
+#instances
+>>> cli.describe_instances()['Reservations'][0].keys()
+dict_keys(['Groups', 'Instances', 'OwnerId', 'ReservationId'])
+
+
+#Configuration
+- record key items.  
 
 save these settings if possible
 AWS instantiation toggles
@@ -44,7 +63,9 @@ KeyName - but can't really be used in terra??!?
 - volume type - VolumeId but this is very specific.
 - tags - seems like custom naming, which is very very handy.
 - security-group - SecurityGroups[ groupname, groupid], tuples
-can you be part of more than one security group?
+can you be part of more than one security group? -- yes you can.  and it is PERMISSIVE.
+
+- security-group - SecurityGroups[ groupname, groupid], tuples
 
 network ACL 
 a network acl can be applied to more than one subnet
@@ -81,12 +102,10 @@ you can deploy/test/view it as a webpage for localbrowser OR webserver
 - maybe could be versioned?  but not sure.  i suppose it's just text so it can be more easily stored.
 - this way you can look at old versions of the config dump so to speak.
 
-List VPCs and the EC2's within
+# elastic load balancer
+client = boto3.client('elb')
 
-describe_vpcs()
-this finds all vpcs and cidr block associations (indirectly the subnets are here) 
->>> cli.describe_vpcs()['Vpcs'][0].keys()
-dict_keys(['CidrBlock', 'DhcpOptionsId', 'State', 'VpcId', 'OwnerId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'IsDefault', 'Tags'])
+List VPCs and the EC2's within
 
 Gateways for each Subnet - this is good to know you can get out and a common problem.
 
@@ -99,26 +118,10 @@ Gateways for each Subnet - this is good to know you can get out and a common pro
 #AWS_SESSION_TOKEN
 #The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
 
-#instances
->>> cli.describe_instances()['Reservations'][0].keys()
-dict_keys(['Groups', 'Instances', 'OwnerId', 'ReservationId'])
-
-#route tables
-
->>> cli.describe_route_tables()['RouteTables'][0].keys()
-dict_keys(['Associations', 'PropagatingVgws', 'RouteTableId', 'Routes', 'Tags', 'VpcId', 'OwnerId'])
-
 populate a dictionary with subnetID is key. value is list of route dicts.
 SubnetID is here, so you can match subnet ID with a list of Routes!!!
 
 can we tie subnets+internet gateways together off of VPC?  should we use sql for this?  or just normal comparisons
-
-# subnets
-cli.describe_subnets()['Subnets'][0].keys()
-dict_keys(['AvailabilityZone', 'AvailabilityZoneId', 'AvailableIpAddressCount', 'CidrBlock', 'DefaultForAz', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'AssignIpv6AddressOnCreation', 'Ipv6CidrBlockAssociationSet', 'Tags', 'SubnetArn'])    
-
-# internet gateways
-cli.describe_internet_gateways()['InternetGateways'][0]['Attachments'] -> this gives VpcID.
 
 SIDE FEATURES
 # jenkins as ci/cd.  pretty heavy.
