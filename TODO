@@ -9,7 +9,6 @@ Main Features
     - looks for unused elastic IPs (this will be billed if not discovered)
 - quick diagnostic tool to help people troubleshoot your network
 
-
 Tech
 - custom data format/json format to restore configurations
 - add support for
@@ -52,7 +51,6 @@ a network acl can be applied to more than one subnet
 security group 
 for instances.  can be set in group of instances.
 
-
 - able to connect to AWS and list VPCs, EC2s, Subnets, which EC2 is in which Subnet.  
 - ALSO, parse all regions to check for existing EC2
 - Internet Gateways and VPCs
@@ -70,7 +68,6 @@ for instances.  can be set in group of instances.
 - quick dashboard
 using tables 
 
-
 - notes 
 boto3.client works only per region, and must be initialized as such.
 
@@ -84,46 +81,44 @@ you can deploy/test/view it as a webpage for localbrowser OR webserver
 - maybe could be versioned?  but not sure.  i suppose it's just text so it can be more easily stored.
 - this way you can look at old versions of the config dump so to speak.
 
-
-
-
 List VPCs and the EC2's within
-
-describe_instances()
-
-
 
 describe_vpcs()
 this finds all vpcs and cidr block associations (indirectly the subnets are here) 
+>>> cli.describe_vpcs()['Vpcs'][0].keys()
+dict_keys(['CidrBlock', 'DhcpOptionsId', 'State', 'VpcId', 'OwnerId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'IsDefault', 'Tags'])
 
 Gateways for each Subnet - this is good to know you can get out and a common problem.
-
-ec2client
-describe_route_tables 
-
-populate a dictionary with subnetID is key. value is list of route dicts.
-SubnetID is here, so you can match subnet ID with a list of Routes!!!
-
-
 
 # get AWS credentials
 # get from environment variables
 # check for failure on no-auth
-#Boto3 will check these environment variables for credentials:
+# Boto3 will check these environment variables for credentials:
 #AWS_ACCESS_KEY_ID
 #AWS_SECRET_ACCESS_KEY
 #AWS_SESSION_TOKEN
 #The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
 
-       # gives subnetid, vpcid, ownerid
-        # subnets / vpc / route table, network acl, default subnet
-        self.client.describe_subnets()
-    
-        # describe_internet_gateways() - lists exissting ones, but not attached ones to subnets
-        
-        # ec2 can get internet gateway - ec2.internetgateway
-        # this will need filtering
-        self.client.describe_instances()
+#instances
+>>> cli.describe_instances()['Reservations'][0].keys()
+dict_keys(['Groups', 'Instances', 'OwnerId', 'ReservationId'])
+
+#route tables
+
+>>> cli.describe_route_tables()['RouteTables'][0].keys()
+dict_keys(['Associations', 'PropagatingVgws', 'RouteTableId', 'Routes', 'Tags', 'VpcId', 'OwnerId'])
+
+populate a dictionary with subnetID is key. value is list of route dicts.
+SubnetID is here, so you can match subnet ID with a list of Routes!!!
+
+can we tie subnets+internet gateways together off of VPC?  should we use sql for this?  or just normal comparisons
+
+# subnets
+cli.describe_subnets()['Subnets'][0].keys()
+dict_keys(['AvailabilityZone', 'AvailabilityZoneId', 'AvailableIpAddressCount', 'CidrBlock', 'DefaultForAz', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'AssignIpv6AddressOnCreation', 'Ipv6CidrBlockAssociationSet', 'Tags', 'SubnetArn'])    
+
+# internet gateways
+cli.describe_internet_gateways()['InternetGateways'][0]['Attachments'] -> this gives VpcID.
 
 SIDE FEATURES
 # jenkins as ci/cd.  pretty heavy.
@@ -148,5 +143,3 @@ EC2 InstanceId, availability zone, current region, VpcID, SubnetID, PrivateIPAdd
 PublicIpName (if exists), State, PublicDnsName, Tags (variable if they exist or not - these are special custom descriptions)
 
 elastic ips just show up as public ips, PublicIp, PublicIPAddress
-
-
