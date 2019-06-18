@@ -112,20 +112,46 @@ class AWSVPC():
         else:
             self.tags = None
         self.ownerid = vpcDict['OwnerId']
+
+
+class TerraformHandler():
+    def __init__(self, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
+        # remember, these are the output files
+        self.mainConfigFileName = mainConfigFileName
+        self.variableFileName = variableFileName
     
+    def updateOrSendStuff(self):
+        # get the list of vpcs.  subnets.  (maybe build a super string?  then append?)
+        pass
+
     def terraformDump(self):
         # calls different terraoutput modules to create a working config
-        fp = open("cloudbuddy-main.tf", 'w')
+        # need a better way to collect and call this later.
+        # will probably be called all at once.  
+        # somehow get the data to loop across.
 
+        # getProviders()
+        # getResources()
+        # getVpcResources()
+        # getSubnetResources()
+        # getEC2Resources()
+        # getSecurityGroups()
+        # getGateways()
+
+
+
+        fp = open(self.mainConfigFileName, 'w')
+
+        # use logic on resourceType to dictate the inputs 
         tfcode = self.providerOutput()
         tfcode += self.resourceOutput()
 
         fp.write(tfcode)
         fp.close()
 
-        fp = open("cloudbuddy-var.tf", 'w')
+        fp = open(self.variableFileName, 'w')
 
-        tfcode = self.variableOutput()
+        tfcode = self.variableOutput(resourceType, typeValue)
         fp.write(tfcode)
         fp.close()
         
@@ -152,13 +178,20 @@ class AWSVPC():
         print (resourceStr)
         return resourceStr
 
-    def variableOutput(self):
-        # need to pass cidrblocks
-        variableStr = """variable "vpc_cidr" {{
-            description = "VPC CIDR address"
-            default = "{cidr}"
-        }}""".format(cidr="10.0.0.0/24")
+    def variableOutput(self, resourceType, typeValue):
+        # need to pass cidr
+        variableStr = ""
+
+        if resourceType == 'vpc':
+            variableStr = """variable "vpc_cidr" {{
+                description = "VPC CIDR address"
+                default = "{cidr}"
+            }}""".format(cidr=typeValue)
         return variableStr
+
+class AWSSubnet():
+    def __init__(self):
+        pass
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -175,12 +208,17 @@ def main():
     vpcslices = acb.getVPCs()['Vpcs']
     AWSVPCList = []
 
+    #gets vpcs and saves it to the awsvpclist
+    
     print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
         vpcDict = acb.extractVPC(vpcslice)
         AWSVPCinst = AWSVPC(vpcDict)
-        AWSVPCinst.terraformDump()
         AWSVPCList.append(AWSVPCinst)
+    
+    #list is initialized
+    for i in AWSVPCList:
+        print (i)
 
     #print (acb.listInstances('us-east-2'))
     #acb.initRegionList()
