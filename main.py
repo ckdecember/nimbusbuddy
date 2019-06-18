@@ -141,9 +141,17 @@ class TerraformHandler():
         resourceType = 'vpc'
         
         fp = open(self.mainConfigFileName, 'w')
-        # use logic on resourceType to dictate the inputs 
+        # use logic on resourceType to dictate the inputs
+        # 
+        # you can change the region here
+        #  
         tfcode = self.providerOutput()
 
+        # with a basename, random digits, then string stuffing
+        #  bstr.zfill(maxdigits-len(bstr))
+
+        # need to make unique values for the 'variables' or even resource names that have more than one
+        # 
         tfcode += self.resourceOutput(resourceType)
 
         fp.write(tfcode)

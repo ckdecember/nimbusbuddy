@@ -23,6 +23,14 @@ Tech
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
+# given a region and aws credentials...
+
+# able to move from AWS live to terraform config somewhat.
+# clean that up a bit to handle more than one vpc
+# save the existing lists somehow in a datastructure or serialize.
+# add a command line arg to execute a terraform dump
+
+
 we now have a vpc datastructure
 dump the vpc datastructure into terraform.
 each component is a class
