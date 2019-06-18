@@ -27,33 +27,9 @@ Tech
 # RECORD subnet's CIDR.
 # need to dynamically generate a variables.tf and main.tf
 # pyhcl
-#
-#
-variable "ami_id" {
-    description = "incoming ami id"
-    default = "ami-06397100adf427136"
-}
 
-variable "vpc_cidr" {
-    description = "VPC's CIDR address"
-    default = "10.0.0.0/16"
-}
-
-variables "subnet_cidr" {
-    description = "Subnet's CIDR address"
-    default = "10.0.1.0/24"
-}
-
-variables "region" {
-    description = "AWS Region"
-    default = "us-west-1"
-}
-
-variables "instance_type" {
-    description = "AWS cpu/power type"
-    default = "t2.micro"
-}
-
+create a dataset, or rule
+vpc_id, cidrblock, tags, state, ownerid 
 
 describe_vpcs()
 this finds all vpcs and cidr block associations (indirectly the subnets are here) 

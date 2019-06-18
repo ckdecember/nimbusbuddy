@@ -73,9 +73,41 @@ class AWSCloudBuddy():
         for region in regionList:
             self.dataStruct[region] = []
     
-    def getVPC(self, regionname='us-west-1'):
+    def getVPCs(self, regionname='us-west-1'):
+        #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
         #{'Vpcs': [{'CidrBlock': '172.31.0.0/16', 'State': 'available', 'VpcId': 'vpc-db4045bc', 'CidrBlockAssociationSet': [{'AssociationId': 'vpc-cidr-assoc-527b9939', 'CidrBlock': '172.31.0.0/16', 'CidrBlockState': {'State': 'associated'}}], 'IsDefault': True}]
+    
+    def insertVPC(self, vpcslice):
+        keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
+        expandedKeyList = ['Tags']
+        tmpdict = {}
+        for key in keyList:
+            if key in vpcslice:
+                # some values are actually lists, expand those lists.
+                if key in expandedKeyList:
+                    for item in vpcslice[key]:
+                        print ("{} {}".format('Name:', item['Value']))
+                        tmpdict[key] = item['Value']
+                else:
+                    print ("{} {}".format(key, vpcslice[key]))
+                    tmpdict[key] = vpcslice[key]
+        # so we can get the data now.  store it somewhere?
+        # do we store it in a db?  too heavy?  serialize?
+        # have a dump to terraform.
+        # instantiate a AWSVPC
+        
+
+class AWSVPC():
+    def __init__(self, vpcid, cidrblock, state, tags, ownerid):
+        self.vpcid = vpcid
+        self.cidrblock = cidrblock
+        self.state = state
+        self.tags = tags
+        self.ownerid = ownerid
+    
+
+
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -89,7 +121,11 @@ class TestCloudBuddy(unittest.TestCase):
 def main():
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    print (acb.getVPC())
+    vpcslices = acb.getVPCs()['Vpcs']
+
+    print ("number of vpcs is {}".format(len(vpcslices)))
+    for vpcslice in vpcslices:
+        acb.insertVPC(vpcslice)
 
     #print (acb.listInstances('us-east-2'))
     #acb.initRegionList()
