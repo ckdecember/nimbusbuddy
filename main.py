@@ -135,8 +135,9 @@ class AWSVPC():
         tags = {
             Name = "The Lich's Den"
         }
-        }"""
-
+}
+"""
+        fp.write(tfcode)
         fp.close()
         
     def providerOutput(self):
@@ -168,7 +169,10 @@ def main():
     print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
         vpcDict = acb.extractVPC(vpcslice)
-        AWSVPCList.append(AWSVPC(vpcDict))
+        AWSVPCinst = AWSVPC(vpcDict)
+        AWSVPCinst.terraformDump()
+        AWSVPCList.append(AWSVPCinst)
+
 
     print (AWSVPCList)
     #print (acb.listInstances('us-east-2'))
@@ -178,6 +182,7 @@ def main():
         #print (acb.ec2clientdict[key])
     #regionlist = acb.getAllRegions()
     #print (regionlist)
+
 
 if  __name__ =='__main__': main()
 
