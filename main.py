@@ -123,13 +123,19 @@ class AWSVPC():
         # hmmm check for existing file, read in with hcl to verify
         # 
         #for now, recreate from scratch
+        # aws region is pretty static.
+        # aws vpcs can be looped
+        # aws subnets can also be looped
+        # aws ec2s can be looped
+        # securitygroups
+        # internet gateways
 
+   
         fp = open("cloudbuddy-main.tf", 'w')
 
-        tfcode = """provider "aws" {
-            region = "${var.region}"
-        }
+        tfcode = self.providerOutput()
 
+        tfcode = """
         resource "aws_vpc" "vpc_007" {
         cidr_block = "${var.vpc_cidr}"
         tags = {
@@ -141,15 +147,9 @@ class AWSVPC():
         fp.close()
         
     def providerOutput(self):
-        providerStr = """provider "%s" {
-            region = "%s"
-        }
-        """
-        # use .replace to swap the %s.  or format.
-        
-
-
-    
+        providerStr = """provider "{provider}" {{\n\tregion = "{region}"\n}}
+            """.format(provider='boo', region='boo')
+        print (providerStr)
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
