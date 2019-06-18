@@ -5,6 +5,7 @@ Core control module for cloudbuddy
 
 import boto3
 import botocore
+import hcl
 
 import unittest
 
@@ -27,6 +28,10 @@ class AWSCloudBuddy():
 
         regionList = self.getAllRegions()
         self.initDataStruct(regionList)
+
+        self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
+        self.vpcExpandedKeyList = ['Tags']
+
     
     def listSubnets(self):
         self.ec2client.describe_subnets()
@@ -78,36 +83,72 @@ class AWSCloudBuddy():
         return self.ec2clientdict[regionname].describe_vpcs()
         #{'Vpcs': [{'CidrBlock': '172.31.0.0/16', 'State': 'available', 'VpcId': 'vpc-db4045bc', 'CidrBlockAssociationSet': [{'AssociationId': 'vpc-cidr-assoc-527b9939', 'CidrBlock': '172.31.0.0/16', 'CidrBlockState': {'State': 'associated'}}], 'IsDefault': True}]
     
-    def insertVPC(self, vpcslice):
-        keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
-        expandedKeyList = ['Tags']
-        tmpdict = {}
-        for key in keyList:
+    def extractVPC(self, vpcslice):
+        vpcDict = {}
+        for key in self.vpcKeyList:
             if key in vpcslice:
                 # some values are actually lists, expand those lists.
-                if key in expandedKeyList:
+                if key in self.vpcExpandedKeyList:
                     for item in vpcslice[key]:
-                        print ("{} {}".format('Name:', item['Value']))
-                        tmpdict[key] = item['Value']
+                        #print ("{} {}".format('Name:', item['Value']))
+                        vpcDict[key] = item['Value']
                 else:
-                    print ("{} {}".format(key, vpcslice[key]))
-                    tmpdict[key] = vpcslice[key]
+                    #print ("{} {}".format(key, vpcslice[key]))
+                    vpcDict[key] = vpcslice[key]
         # so we can get the data now.  store it somewhere?
         # do we store it in a db?  too heavy?  serialize?
         # have a dump to terraform.
-        # instantiate a AWSVPC
+        # instantiate a AWSVPC, somehow make the keylist universal for vpcs
+        return vpcDict
+    
+class AWSVPC():
+    def __init__(self, vpcDict):
+        #['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
+        #['Tags']
+
+        self.vpcid = vpcDict['VpcId']
+        self.cidrblock = vpcDict['CidrBlock']
+        self.state = vpcDict['State']
+        if 'Tags' in vpcDict:
+            self.tags = vpcDict['Tags']
+        else:
+            self.tags = None
+        self.ownerid = vpcDict['OwnerId']
+    
+    def terraformDump(self):
+        #with open('file.hcl', 'r') as fp:
+        #obj = hcl.load(fp)
+
+        # check obj for core keys.  
+        # hmmm check for existing file, read in with hcl to verify
+        # 
+        #for now, recreate from scratch
+
+        fp = open("cloudbuddy-main.tf", 'w')
+
+        tfcode = """provider "aws" {
+            region = "${var.region}"
+        }
+
+        resource "aws_vpc" "vpc_007" {
+        cidr_block = "${var.vpc_cidr}"
+        tags = {
+            Name = "The Lich's Den"
+        }
+        }"""
+
+        fp.close()
+        
+    def providerOutput(self):
+        providerStr = """provider "%s" {
+            region = "%s"
+        }
+        """
+        # use .replace to swap the %s.  or format.
         
 
-class AWSVPC():
-    def __init__(self, vpcid, cidrblock, state, tags, ownerid):
-        self.vpcid = vpcid
-        self.cidrblock = cidrblock
-        self.state = state
-        self.tags = tags
-        self.ownerid = ownerid
+
     
-
-
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -122,11 +163,14 @@ def main():
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
     vpcslices = acb.getVPCs()['Vpcs']
+    AWSVPCList = []
 
     print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
-        acb.insertVPC(vpcslice)
+        vpcDict = acb.extractVPC(vpcslice)
+        AWSVPCList.append(AWSVPC(vpcDict))
 
+    print (AWSVPCList)
     #print (acb.listInstances('us-east-2'))
     #acb.initRegionList()
     #for key in acb.ec2clientdict.keys():

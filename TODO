@@ -23,10 +23,55 @@ Tech
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
-# RECORD vpc's CIDR.
+we now have a vpc datastructure
+dump the vpc datastructure into terraform.
+each component is a class
+
 # RECORD subnet's CIDR.
 # need to dynamically generate a variables.tf and main.tf
 # pyhcl
+# pyhcl might not write to hcl. oops.
+# make your own parser or template reader/writer.
+# need variables for flexibility
+# need core main.tf file.
+# able to read it in json though.  so probably not too hard.
+# either expand all variables OR
+# create variables and main.tf with variable like values 
+
+
+# core stuff
+#
+provider "aws" {
+    region = "${var.region}"
+}
+
+resource "aws_vpc" "vpc_007" {
+  cidr_block = "${var.vpc_cidr}"
+  tags = {
+      Name = "The Lich's Den"
+  }
+}
+
+resource "aws_subnet" "forLiches" {
+  vpc_id     = "${aws_vpc.vpc_007.id}"
+  cidr_block = "${var.subnet_cidr"
+
+  tags = {
+    Name = "lich's subnet"
+  }
+}
+
+resource "aws_instance" "dracolich1" {
+  instance_type = "t2.micro"
+  #ami = "ami-06397100adf427136"
+  ami = "${var.ami_id}"
+  subnet_id = "${aws_subnet.forLiches.id}"
+
+  tags = {
+    Name = "${var.snoopdoggydog}"
+  }
+}
+#
 
 create a dataset, or rule
 vpc_id, cidrblock, tags, state, ownerid 
