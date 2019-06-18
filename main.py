@@ -81,7 +81,6 @@ class AWSCloudBuddy():
     def getVPCs(self, regionname='us-west-1'):
         #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
-        #{'Vpcs': [{'CidrBlock': '172.31.0.0/16', 'State': 'available', 'VpcId': 'vpc-db4045bc', 'CidrBlockAssociationSet': [{'AssociationId': 'vpc-cidr-assoc-527b9939', 'CidrBlock': '172.31.0.0/16', 'CidrBlockState': {'State': 'associated'}}], 'IsDefault': True}]
     
     def extractVPC(self, vpcslice):
         vpcDict = {}
@@ -105,7 +104,6 @@ class AWSVPC():
     def __init__(self, vpcDict):
         #['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
         #['Tags']
-
         self.vpcid = vpcDict['VpcId']
         self.cidrblock = vpcDict['CidrBlock']
         self.state = vpcDict['State']
@@ -116,40 +114,51 @@ class AWSVPC():
         self.ownerid = vpcDict['OwnerId']
     
     def terraformDump(self):
-        #with open('file.hcl', 'r') as fp:
-        #obj = hcl.load(fp)
-
-        # check obj for core keys.  
-        # hmmm check for existing file, read in with hcl to verify
-        # 
-        #for now, recreate from scratch
-        # aws region is pretty static.
-        # aws vpcs can be looped
-        # aws subnets can also be looped
-        # aws ec2s can be looped
-        # securitygroups
-        # internet gateways
-
-   
+        # calls different terraoutput modules to create a working config
         fp = open("cloudbuddy-main.tf", 'w')
 
         tfcode = self.providerOutput()
+        tfcode += self.resourceOutput()
 
-        tfcode = """
-        resource "aws_vpc" "vpc_007" {
-        cidr_block = "${var.vpc_cidr}"
-        tags = {
-            Name = "The Lich's Den"
-        }
-}
-"""
+        fp.write(tfcode)
+        fp.close()
+
+        fp = open("cloudbuddy-var.tf", 'w')
+
+        tfcode = self.variableOutput()
         fp.write(tfcode)
         fp.close()
         
-    def providerOutput(self):
-        providerStr = """provider "{provider}" {{\n\tregion = "{region}"\n}}
-            """.format(provider='boo', region='boo')
+    def providerOutput(self, provider="aws", region="us-west-1"):
+        # 
+        providerStr = """provider "{provider}" {{
+            region = "{region}"
+        }}\n""".format(provider=provider, region=region)
         print (providerStr)
+        return providerStr
+    
+    def resourceOutput(self):
+        # maybe resource list type, vpcs, subnets, ec2s, securitygroups, internet gateways
+        # either conditional or different template.  probably different template for clarity
+        # resource, resource_name (arb), cidrblock for vpcs
+        # vpcname arbitrary - auto generated, tags/names - any previous tags or else auto create
+
+        resourceStr = """resource "{resource}" "{resource_name}" {{
+            cidr_block = "${{var.vpc_cidr}}"
+            tags = {{
+                Name = "{tags}"
+            }}
+        }}""".format(resource='aws_vpc', resource_name='vpc_X',tags="automated drone")
+        print (resourceStr)
+        return resourceStr
+
+    def variableOutput(self):
+        # need to pass cidrblocks
+        variableStr = """variable "vpc_cidr" {{
+            description = "VPC CIDR address"
+            default = "{cidr}"
+        }}""".format(cidr="10.0.0.0/24")
+        return variableStr
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
@@ -173,8 +182,6 @@ def main():
         AWSVPCinst.terraformDump()
         AWSVPCList.append(AWSVPCinst)
 
-
-    print (AWSVPCList)
     #print (acb.listInstances('us-east-2'))
     #acb.initRegionList()
     #for key in acb.ec2clientdict.keys():
@@ -186,5 +193,5 @@ def main():
 
 if  __name__ =='__main__': main()
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Carroll Kong'
