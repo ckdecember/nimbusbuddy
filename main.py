@@ -6,6 +6,7 @@ Core control module for cloudbuddy
 import boto3
 import botocore
 import hcl
+import terraformhandler
 
 import unittest
 
@@ -153,6 +154,11 @@ class AWSInstances():
         self.publicdnsname = instanceDict['PublicDnsName']
         self.subnetid = instanceDict['SubnetId']
 
+        if 'InstanceType' in instanceDict:
+            self.instancetype = instanceDict['InstanceType']
+        else:
+            self.instancetype = None
+
         if 'Placement' in instanceDict:
             self.placement = instanceDict['Placement']
         else:
@@ -165,112 +171,13 @@ class AWSInstances():
             self.securitygroups = instanceDict['SecurityGroups']
         else:
             self.securitygroups = None
-        
-        #owner is pulled previously
-        #self.ownerid = instanceDict['OwnerId']
+
+        if 'OwnerId' in instanceDict:
+            self.ownerid = instanceDict['OwnerId']
+        else:
+            self.ownerid = None
         self.state = instanceDict['State']
 
-        
-class TerraformHandler():
-    def __init__(self, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
-        self.mainConfigFileName = mainConfigFileName
-        self.variableFileName = variableFileName
-        self.resourceDictList = {}
-    
-    def terraformDump(self, region):
-        # getEC2Resources()
-        # getSecurityGroups()
-        # getGateways()
-        # use hcl to check if provider exists.  if so, don't bother.
-        # open'r' then.
-        # check
-        resourceTypeList = ['vpc', 'subnet']
-
-        # making the main.tf file equivalent        
-        fp = open(self.mainConfigFileName, 'w')
-        # you can change the region here
-        # by default, no region, but maybe allow you to pass a new region here.
-         
-        tfcode = self.providerOutput(region=region)
-        fp.write(tfcode)
-
-        tfcode = ''
-
-        # with a basename, random digits, then string stuffing
-        #  bstr.zfill(maxdigits-len(bstr))
-        # need to make unique values for the 'variables' or even resource names that have more than one
-        # 
-        # go through the list, can trust unique vpcid from amazon.
-        # self.dataList[0].vpcid
-        for resourceType in resourceTypeList:
-            tfcode = ''
-            for data in self.resourceDictList[resourceType]:
-                # can't always rely on this.  make it a new identifier tag during init
-                tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
-            fp.write(tfcode)
-        fp.close()
-
-        fp = open(self.variableFileName, 'w')
-
-        for resourceType in resourceTypeList:
-            for data in self.resourceDictList[resourceType]:
-                tfcode = self.variableOutput(resourceType, data.uniqueid, data.cidrblock, data.tags)
-                fp.write(tfcode)
-        fp.close()
-        
-    def providerOutput(self, provider="aws", region="us-west-1"):
-        providerStr = """provider "{provider}" {{
-            region = "{region}"
-        }}\n""".format(provider=provider, region=region)
-        #print (providerStr)
-        return providerStr
-    
-    def resourceOutput(self, resourceType, resourceName, varName, resourceTag, vpcid):
-        resourceStr = ''
-        if resourceType == 'vpc':
-            resourceStr = """resource "{resource}" "{resource_name}" {{
-                cidr_block = "${{var.var_{varName}}}"
-                tags = {{
-                    Name = "{tags}"
-                }}
-            }}\n""".format(resource='aws_vpc', varName=varName, resource_name=resourceName,tags=resourceTag)
-        elif resourceType == 'subnet': 
-            resourceStr = """resource "{resource}" "{resource_name}" {{
-                vpc_id = "${{aws_vpc.{vpcid}.id}}"
-                cidr_block = "${{var.var_{varName}}}"
-                tags = {{
-                    Name = "{tags}"
-                }}
-            }}\n""".format(resource='aws_subnet', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
-        elif resourceType == 'instance':
-            resourceStr = """resource "{resource}" "{resource_name}" {{
-                instance_type = "t2.micro"
-                ami = "${{var.ami_id}}"
-                subnet_id = "${{aws_vpc.{vpcid}.id}}"
-                tags = {{
-                    Name = "{tags}"
-                }}
-            }}\n""".format(resource='aws_instance', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
-        #print (resourceStr)
-        return resourceStr
-
-    def variableOutput(self, resourceType, varName, typeValue, description):
-        variableStr = ""
-        if resourceType == 'vpc':
-            variableStr = """variable "var_{varName}" {{
-                description = "{tags}"
-                default = "{cidr}"
-            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
-        elif resourceType == 'subnet':
-            variableStr = """variable "var_{varName}" {{
-                description = "{tags}"
-                default = "{cidr}"
-            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
-        return variableStr
-    
-    def setDataList(self, dataList, resourceType):
-        self.resourceDictList[resourceType] = dataList
-        
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
         client = boto3.client('ec2')
@@ -315,9 +222,10 @@ def main():
         instanceDict = acb.extractInstance(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
         
         InstanceInst = AWSInstances(instanceDict)
+        print (InstanceInst.instancetype)
         InstanceList.append(InstanceInst)
     
-    tf = TerraformHandler()
+    tf = terraformhandler.TerraformHandler()
     tf.setDataList(AWSVPCList, "vpc")
     tf.setDataList(SubnetList, "subnet")
     tf.setDataList(InstanceList, "instance")
