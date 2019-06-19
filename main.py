@@ -177,6 +177,7 @@ class AWSInstances():
         else:
             self.ownerid = None
         self.state = instanceDict['State']
+        self.uniqueid = self.instanceid
 
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):

@@ -26,19 +26,28 @@ class TerraformHandler():
                 # can't always rely on this.  make it a new identifier tag during init
                 tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
             fp.write(tfcode)
-        if resourceType == 'instance':
-            tfcode += self.resourceInstanceOutput(data.instanceId, data.instanceType, data.uniqueId, data.subnetId)
-            
+        
+        tfcode = ''
+        for data in self.resourceDictList['instance']:
+            tfcode = self.resourceInstanceOutput(data.instanceid, data.instancetype, data.imageid, data.subnetid, data.tags)
+            ## somehow this dupes it.
+            fp.write(tfcode)
         fp.close()
 
-        # ec2 instance, 
-
+        ### VARIABLES.TF
         fp = open(self.variableFileName, 'w')
 
+        tfcode = ''
         for resourceType in resourceTypeList:
             for data in self.resourceDictList[resourceType]:
                 tfcode = self.variableOutput(resourceType, data.uniqueid, data.cidrblock, data.tags)
                 fp.write(tfcode)
+
+        #
+        #for data in self.resourceDictList['instance']:
+            # for ami
+        #    tfcode = self.variableOutput('instance', data.uniqueid, data.imageid, data.tags)
+        #    fp.write(tfcode)
         fp.close()
         
     def providerOutput(self, provider="aws", region="us-west-1"):
@@ -65,19 +74,6 @@ class TerraformHandler():
                     Name = "{tags}"
                 }}
             }}\n""".format(resource='aws_subnet', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
-        elif resourceType == 'instance':
-            # DEFUNCT DO NOT USE
-            # need instance_type, ami_type, subnet needs to be pulled
-            # needs 3 values instanceid, instancetype, subnetid
-            resourceStr = """resource "{resource}" "{resource_name}" {{
-                instance_type = "t2.micro"
-                ami = "${{var.ami_id}}"
-                subnet_id = "${{aws_vpc.{vpcid}.id}}"
-                tags = {{
-                    Name = "{tags}"
-                }}
-            }}\n"""
-            #format(resource='aws_instance', resource_name=instanceid, instancetype=instancetype, subnet_id = subnet)
         #print (resourceStr)
         return resourceStr
 
@@ -86,16 +82,22 @@ class TerraformHandler():
         if resourceType == 'vpc':
             variableStr = """variable "var_{varName}" {{
                 description = "{tags}"
-                default = "{cidr}"
-            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
+                default = "{typeValue}"
+            }}\n\n""".format(varName=varName, typeValue=typeValue, tags=description)
         elif resourceType == 'subnet':
             variableStr = """variable "var_{varName}" {{
                 description = "{tags}"
-                default = "{cidr}"
-            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
+                default = "{typeValue}"
+            }}\n\n""".format(varName=varName, typeValue=typeValue, tags=description)
+        elif resourceType == 'instance':
+            variableStr = """variable "var_ami_{varName}" {{
+                description = "{tags}"
+                default = "{typeValue}"
+            }}\n\n""".format(varName=varName, typeValue=typeValue, tags=description)
+
         return variableStr
     
-    def resourceInstanceOutput(self, instanceId, instanceType, uniqueId, subnetId):
+    def resourceInstanceOutput(self, instanceid, instancetype, imageid, subnetid, tags):
         resourceStr = ''
         # need instance_type, ami_type, subnet needs to be pulled
         # needs 3 values instance_type (as variable?)
@@ -104,15 +106,25 @@ class TerraformHandler():
 
         resourceStr = """resource "{resource}" "{resourceName}" {{
             instance_type = "{instanceType}"
-            ami = "${{var.ami_{varName}}}"
+            ami = "{imageid}"
             subnet_id = "${{aws_subnet.{subnetid}.id}}"
             tags = {{
                 Name = "{tags}"
             }}
-        }}\n""".format(resource="aws_instance", resourceName=instanceId, instanceType=instanceType, varName=uniqueId, subnetid=subnetId)
+        }}\n""".format(resource="aws_instance", resourceName=instanceid, instanceType=instancetype, imageid=imageid, subnetid=subnetid, tags=tags)
         #format(resource='aws_instance', resource_name=instanceid, instancetype=instancetype, subnet_id = subnet)
-        #print (resourceStr)
+        print (resourceStr)
         return resourceStr
+
+    # XXX work on this
+    def variableInstanceOutput(self, resourceType, varName, typeValue, description):
+        variableStr = ""
+        variableStr = """variable "{prefix}_{varName}" {{
+            description = "{tags}"
+            default = "{cidr}"
+        }}\n\n""".format(prefix="ami", varName=varName, tags=tags)
+        return variableStr
+
     
     def setDataList(self, dataList, resourceType):
         self.resourceDictList[resourceType] = dataList

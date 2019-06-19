@@ -37,6 +37,23 @@ Tech
 # save the existing lists somehow in a datastructure or serialize.
 # add a command line arg to execute a terraform dump
 
+instances should be unique and rely on just $instanceId
+instance_type = instanceType_$instanceid
+ami = ami_$instanceid
+subnetid = $aws_subnet.-subnetvalue.id -- seems to works
+tags are whatever.
+
+
+
+resource "aws_instance" "i-0bd8f2d4f64621d4f" {
+            instance_type = "t2.micro"
+            ami = "${var.i-0bd8f2d4f64621d4f}"
+            subnet_id = "${aws_subnet.subnet-09663327.id}"
+            tags = {
+                Name = "None"
+            }
+        }
+
 
 #resource "aws_subnet" "primary" {
   availability_zone = "${data.aws_availability_zones.available.names[0]}"
