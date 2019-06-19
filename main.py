@@ -123,6 +123,11 @@ class TerraformHandler():
         self.dataList = dataList
     
     def terraformDump(self):
+        # insert vpcs
+        # insert subnets
+        # insert ec2
+
+        #
         # calls different terraoutput modules to create a working config
         # need a better way to collect and call this later.
         # will probably be called all at once.  
@@ -139,28 +144,32 @@ class TerraformHandler():
         # open'r' then.
         # check
         resourceType = 'vpc'
-        
+
+        # making the main.tf file equivalent        
         fp = open(self.mainConfigFileName, 'w')
         # use logic on resourceType to dictate the inputs
         # 
         # you can change the region here
-        #  
+        # by default, no region, but maybe allow you to pass a new region here.
+         
         tfcode = self.providerOutput()
 
         # with a basename, random digits, then string stuffing
         #  bstr.zfill(maxdigits-len(bstr))
-
         # need to make unique values for the 'variables' or even resource names that have more than one
         # 
-        tfcode += self.resourceOutput(resourceType)
+        # go through the list, can trust unique vpcid from amazon.
+        # self.dataList[0].vpcid
 
+        for data in self.dataList:
+            tfcode += self.resourceOutput(resourceType, data.vpcid, data.vpcid, data.tags)
         fp.write(tfcode)
         fp.close()
 
         fp = open(self.variableFileName, 'w')
 
         for data in self.dataList:
-            tfcode = self.variableOutput(resourceType, data.cidrblock, data.tags)
+            tfcode = self.variableOutput(resourceType, data.vpcid, data.cidrblock, data.tags)
             fp.write(tfcode)
         fp.close()
         
@@ -171,7 +180,7 @@ class TerraformHandler():
         print (providerStr)
         return providerStr
     
-    def resourceOutput(self, resourceType):
+    def resourceOutput(self, resourceType, resourceName, varName, resourceTag):
         # maybe resource list type, vpcs, subnets, ec2s, securitygroups, internet gateways
         # either conditional or different template.  probably different template for clarity
         # resource, resource_name (arb), cidrblock for vpcs
@@ -180,35 +189,38 @@ class TerraformHandler():
         # check existing resourceOutputlist, check name, add another resource name
         if resourceType == 'vpc':
             #iterate list of vpcs
-            for vpcDict in self.dataList:
-                resourceTag = ''
-                if vpcDict.tags:
-                    resourceTag = vpcDict.tags
+            #for vpcDict in self.dataList:
+            #    resourceTag = ''
+            #    if vpcDict.tags:
+            #        resourceTag = vpcDict.tags
                 
                 #find unique resource_name
                 # create a dict?!?  
 
-                resourceStr = """resource "{resource}" "{resource_name}" {{
-                    cidr_block = "${{var.vpc_cidr}}"
-                    tags = {{
-                        Name = "{tags}"
-                    }}
-                }}\n""".format(resource='aws_vpc', resource_name='vpc_X',tags=resourceTag)
+            resourceStr = """resource "{resource}" "{resource_name}" {{
+                cidr_block = "${{var.var_{varName}}}"
+                tags = {{
+                    Name = "{tags}"
+                }}
+            }}\n""".format(resource='aws_vpc', varName=varName, resource_name=resourceName,tags=resourceTag)
         print (resourceStr)
         return resourceStr
 
-    def variableOutput(self, resourceType, typeValue, description):
+    def variableOutput(self, resourceType, varName, typeValue, description):
         # need to pass cidr
         variableStr = ""
         # needs unique vpc_cidr here
         # needs to ensure these variables map cleanly
 
         if resourceType == 'vpc':
-            variableStr = """variable "vpc_cidr" {{
+            variableStr = """variable "var_{varName}" {{
                 description = "{tags}"
                 default = "{cidr}"
-            }}\n\n""".format(cidr=typeValue, tags=description)
+            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
         return variableStr
+    
+    def setDataList(self, dataList, resourceType):
+        pass
 
 class AWSSubnet():
     def __init__(self):
@@ -237,8 +249,14 @@ def main():
         AWSVPCinst = AWSVPC(vpcDict)
         AWSVPCList.append(AWSVPCinst)
     
+    # get subnetlist
+    # get ec2 list
+
+    # setVPClist.setDataList
+    
     #list is initialized
-    tf = TerraformHandler(AWSVPCList, 'vpc') 
+    tf = TerraformHandler(AWSVPCList, 'vpc')
+
     tf.terraformDump()
         #self.vpcid = vpcDict['VpcId']
         #self.cidrblock = vpcDict['CidrBlock']
