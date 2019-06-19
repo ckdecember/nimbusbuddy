@@ -11,8 +11,7 @@ resource "aws_vpc" "vpc_007" {
 
 resource "aws_subnet" "forLiches" {
   vpc_id     = "${aws_vpc.vpc_007.id}"
-  cidr_block = "${var.subnet_cidr"
-
+  cidr_block = "10.0.0.0/24"
   tags = {
     Name = "lich's subnet"
   }

@@ -33,7 +33,7 @@ class AWSCloudBuddy():
         self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
         self.subnetExpandedKeyList = ['Tags']
 
-        self.instanceKeyList = ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
+        self.instanceKeyList = ['InstanceId', 'InstanceType', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
         self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
     
     def listSubnets(self):
@@ -222,7 +222,6 @@ def main():
         instanceDict = acb.extractInstance(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
         
         InstanceInst = AWSInstances(instanceDict)
-        print (InstanceInst.instancetype)
         InstanceList.append(InstanceInst)
     
     tf = terraformhandler.TerraformHandler()
