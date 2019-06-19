@@ -23,6 +23,13 @@ Tech
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
+# TODO
+- add features -> display network
+- create terraform config
+- save config (custom settings)
+
+- allow passing of target region
+
 # given a region and aws credentials...
 
 # able to move from AWS live to terraform config somewhat.
