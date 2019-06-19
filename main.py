@@ -165,9 +165,10 @@ class AWSInstances():
             self.securitygroups = instanceDict['SecurityGroups']
         else:
             self.securitygroups = None
-
-        self.ownerid = subnetDict['OwnerId']
-        self.state = subnetDict['State']
+        
+        #owner is pulled previously
+        #self.ownerid = instanceDict['OwnerId']
+        self.state = instanceDict['State']
 
         
 class TerraformHandler():
@@ -221,7 +222,7 @@ class TerraformHandler():
         providerStr = """provider "{provider}" {{
             region = "{region}"
         }}\n""".format(provider=provider, region=region)
-        print (providerStr)
+        #print (providerStr)
         return providerStr
     
     def resourceOutput(self, resourceType, resourceName, varName, resourceTag, vpcid):
@@ -241,7 +242,16 @@ class TerraformHandler():
                     Name = "{tags}"
                 }}
             }}\n""".format(resource='aws_subnet', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
-        print (resourceStr)
+        elif resourceType == 'instance':
+            resourceStr = """resource "{resource}" "{resource_name}" {{
+                instance_type = "t2.micro"
+                ami = "${{var.ami_id}}"
+                subnet_id = "${{aws_vpc.{vpcid}.id}}"
+                tags = {{
+                    Name = "{tags}"
+                }}
+            }}\n""".format(resource='aws_instance', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
+        #print (resourceStr)
         return resourceStr
 
     def variableOutput(self, resourceType, varName, typeValue, description):
@@ -277,7 +287,7 @@ def main():
     AWSVPCList = []
 
     subnetslices = acb.getSubnets(regionname='us-east-1')['Subnets']
-    print (subnetslices)
+    #print (subnetslices)
     SubnetList = []
 
     instanceslices = acb.getInstances(regionname='us-east-1')['Reservations']
@@ -303,10 +313,9 @@ def main():
         # instances are handled differently
         #instanceDict = acb.extractResource(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
         instanceDict = acb.extractInstance(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
-        print ("instance dict")
-        print (instanceDict)
-        #InstanceInst = AWSInstances(instanceDict)
-        #InstanceList.append(InstanceInst)
+        
+        InstanceInst = AWSInstances(instanceDict)
+        InstanceList.append(InstanceInst)
     
     tf = TerraformHandler()
     tf.setDataList(AWSVPCList, "vpc")
