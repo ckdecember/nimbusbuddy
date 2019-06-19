@@ -31,6 +31,9 @@ class AWSCloudBuddy():
 
         self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
         self.subnetExpandedKeyList = ['Tags']
+
+        self.instanceKeyList = ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
+        self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
     
     def listSubnets(self):
         self.ec2client.describe_subnets()
@@ -80,6 +83,12 @@ class AWSCloudBuddy():
     def getVPCs(self, regionname='us-west-1'):
         #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
+
+    def getSubnets(self, regionname='us-west-1'):
+        return self.ec2clientdict[regionname].describe_subnets()
+
+    def getInstances(self, regionname='us-west-1'):
+        return self.ec2clientdict[regionname].describe_instances()
     
     def extractResource(self, slice, keyList, expandedKeyList):
         resourceDict = {}
@@ -91,32 +100,16 @@ class AWSCloudBuddy():
                         resourceDict[key] = item['Value']
                 else:
                     resourceDict[key] = slice[key]
+                # instances are handled differently
+        return resourceDict
+    
+    def extractInstance(self, slice, keyList, expandedKeyList):
+        resourceDict = {}
+        for key in keyList:
+            if key in slice:
+                resourceDict[key] = slice[key]
         return resourceDict
 
-    def extractVPC(self, vpcslice):
-        vpcDict = {}
-        for key in self.vpcKeyList:
-            if key in vpcslice:
-                # some values are actually lists, expand those lists.
-                if key in self.vpcExpandedKeyList:
-                    for item in vpcslice[key]:
-                        vpcDict[key] = item['Value']
-                else:
-                    vpcDict[key] = vpcslice[key]
-        return vpcDict
-
-    def extractSubnet(self, subnetslice):
-        subnetDict = {}
-        for key in self.subnetKeyList:
-            if key in subnetslice:
-                if key in self.vpcExpandedKeyList:
-                    for item in vpcslice[key]:
-                        subnetDict[key] = item['Value']
-                else:
-                    subnetDict[key] = subnetslice[key]
-        return subnetDict                
-
-    
 class AWSVPC():
     def __init__(self, vpcDict):
         #['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
@@ -129,41 +122,78 @@ class AWSVPC():
         else:
             self.tags = None
         self.ownerid = vpcDict['OwnerId']
+        self.uniqueid = vpcDict['VpcId']
 
-class AWSSubnets():
+class AWSSubnet():
     def __init__(self, subnetDict):
-        pass
+        #['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
+        self.vpcid = subnetDict['VpcId']
+        self.cidrblock = subnetDict['CidrBlock']
+        self.state = subnetDict['State']
+        if 'Tags' in subnetDict:
+            self.tags = subnetDict['Tags']
+        else:
+            self.tags = None
+        self.ownerid = subnetDict['OwnerId']
+        self.availabilityzone = subnetDict['AvailabilityZone']
+        self.mappubliciponlaunch = subnetDict['MapPublicIpOnLaunch']
+        self.subnetarn = subnetDict['SubnetArn']
+        self.uniqueid = subnetDict['SubnetId']
 
+class AWSInstances():
+    def __init__(self, instanceDict):
+        #>>> cli.describe_instances()['Reservations'][0]['Instances'][0].keys()
+        #['AmiLaunchIndex', 'ImageId', 'InstanceId', 'InstanceType', 'KeyName', 'LaunchTime', 'Monitoring', 'Placement', 'PrivateDnsName', 'PrivateIpAddress', 'ProductCodes', 'PublicDnsName', 'State', 'StateTransitionReason', 'SubnetId', 'VpcId', 'Architecture', 'BlockDeviceMappings', 'ClientToken', 'EbsOptimized', 'EnaSupport', 'Hypervisor', 'NetworkInterfaces', 'RootDeviceName', 'RootDeviceType', 'SecurityGroups', 'SourceDestCheck', 'StateReason', 'Tags', 'VirtualizationType', 'CpuOptions', 'CapacityReservationSpecification', 'HibernationOptions'])
+
+        # ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
+
+        self.instanceid = instanceDict['InstanceId']
+        self.imageid = instanceDict['ImageId']
+        self.privateipaddress = instanceDict['PrivateIpAddress']
+        self.publicdnsname = instanceDict['PublicDnsName']
+        self.subnetid = instanceDict['SubnetId']
+
+        if 'Placement' in instanceDict:
+            self.placement = instanceDict['Placement']
+        else:
+            self.placement = None
+        if 'Tags' in instanceDict:
+            self.tags = instanceDict['Tags']
+        else:
+            self.tags = None
+        if 'SecurityGroups' in instanceDict['SecurityGroups']:
+            self.securitygroups = instanceDict['SecurityGroups']
+        else:
+            self.securitygroups = None
+
+        self.ownerid = subnetDict['OwnerId']
+        self.state = subnetDict['State']
+
+        
 class TerraformHandler():
     def __init__(self, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
         self.mainConfigFileName = mainConfigFileName
         self.variableFileName = variableFileName
         self.resourceDictList = {}
     
-    def terraformDump(self):
-        # calls different terraoutput modules to create a working config
-        # need a better way to collect and call this later.
-        # will probably be called all at once.  
-        # somehow get the data to loop across.
-
-        # getProviders()
-        # getResources()
-        # getVpcResources()
-        # getSubnetResources()
+    def terraformDump(self, region):
         # getEC2Resources()
         # getSecurityGroups()
         # getGateways()
         # use hcl to check if provider exists.  if so, don't bother.
         # open'r' then.
         # check
-        resourceType = 'vpc'
+        resourceTypeList = ['vpc', 'subnet']
 
         # making the main.tf file equivalent        
         fp = open(self.mainConfigFileName, 'w')
         # you can change the region here
         # by default, no region, but maybe allow you to pass a new region here.
          
-        tfcode = self.providerOutput()
+        tfcode = self.providerOutput(region=region)
+        fp.write(tfcode)
+
+        tfcode = ''
 
         # with a basename, random digits, then string stuffing
         #  bstr.zfill(maxdigits-len(bstr))
@@ -171,17 +201,20 @@ class TerraformHandler():
         # 
         # go through the list, can trust unique vpcid from amazon.
         # self.dataList[0].vpcid
-
-        for data in self.resourceDictList[resourceType]:
-            tfcode += self.resourceOutput(resourceType, data.vpcid, data.vpcid, data.tags)
-        fp.write(tfcode)
+        for resourceType in resourceTypeList:
+            tfcode = ''
+            for data in self.resourceDictList[resourceType]:
+                # can't always rely on this.  make it a new identifier tag during init
+                tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
+            fp.write(tfcode)
         fp.close()
 
         fp = open(self.variableFileName, 'w')
 
-        for data in self.resourceDictList[resourceType]:
-            tfcode = self.variableOutput(resourceType, data.vpcid, data.cidrblock, data.tags)
-            fp.write(tfcode)
+        for resourceType in resourceTypeList:
+            for data in self.resourceDictList[resourceType]:
+                tfcode = self.variableOutput(resourceType, data.uniqueid, data.cidrblock, data.tags)
+                fp.write(tfcode)
         fp.close()
         
     def providerOutput(self, provider="aws", region="us-west-1"):
@@ -191,7 +224,8 @@ class TerraformHandler():
         print (providerStr)
         return providerStr
     
-    def resourceOutput(self, resourceType, resourceName, varName, resourceTag):
+    def resourceOutput(self, resourceType, resourceName, varName, resourceTag, vpcid):
+        resourceStr = ''
         if resourceType == 'vpc':
             resourceStr = """resource "{resource}" "{resource_name}" {{
                 cidr_block = "${{var.var_{varName}}}"
@@ -199,6 +233,14 @@ class TerraformHandler():
                     Name = "{tags}"
                 }}
             }}\n""".format(resource='aws_vpc', varName=varName, resource_name=resourceName,tags=resourceTag)
+        elif resourceType == 'subnet': 
+            resourceStr = """resource "{resource}" "{resource_name}" {{
+                vpc_id = "${{aws_vpc.{vpcid}.id}}"
+                cidr_block = "${{var.var_{varName}}}"
+                tags = {{
+                    Name = "{tags}"
+                }}
+            }}\n""".format(resource='aws_subnet', vpcid=vpcid, varName=varName, resource_name=varName,tags=resourceTag)
         print (resourceStr)
         return resourceStr
 
@@ -209,15 +251,16 @@ class TerraformHandler():
                 description = "{tags}"
                 default = "{cidr}"
             }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
+        elif resourceType == 'subnet':
+            variableStr = """variable "var_{varName}" {{
+                description = "{tags}"
+                default = "{cidr}"
+            }}\n\n""".format(varName=varName, cidr=typeValue, tags=description)
         return variableStr
     
     def setDataList(self, dataList, resourceType):
         self.resourceDictList[resourceType] = dataList
         
-class AWSSubnet():
-    def __init__(self):
-        pass
-
 class TestCloudBuddy(unittest.TestCase):
     def test_aws(self):
         client = boto3.client('ec2')
@@ -230,28 +273,48 @@ class TestCloudBuddy(unittest.TestCase):
 def main():
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    vpcslices = acb.getVPCs()['Vpcs']
+    vpcslices = acb.getVPCs(regionname='us-east-1')['Vpcs']
     AWSVPCList = []
+
+    subnetslices = acb.getSubnets(regionname='us-east-1')['Subnets']
+    print (subnetslices)
+    SubnetList = []
+
+    instanceslices = acb.getInstances(regionname='us-east-1')['Reservations']
+    #print (instanceslices)
+    InstanceList = []
+    #['Instances']
     
     print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
-        vpcDict = acb.extractVPC(vpcslice)
+        #vpcDict = acb.extractVPC(vpcslice)
+        vpcDict = acb.extractResource(vpcslice, acb.vpcKeyList, acb.vpcExpandedKeyList)
         AWSVPCinst = AWSVPC(vpcDict)
         AWSVPCList.append(AWSVPCinst)
     
-    # generate all lists.
-    # get subnetlist
-    # get ec2 list
+    for subnetslice in subnetslices:
+        subnetDict = acb.extractResource(subnetslice, acb.subnetKeyList, acb.subnetExpandedKeyList)
+        SubnetInst = AWSSubnet(subnetDict)
+        SubnetList.append(SubnetInst)
 
-    # setVPClist.setDataList
+    for instanceslice in instanceslices:
+        #print (instanceslice)
+        #print (instanceslice['Instances'][0])
+        # instances are handled differently
+        #instanceDict = acb.extractResource(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
+        instanceDict = acb.extractInstance(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
+        print ("instance dict")
+        print (instanceDict)
+        #InstanceInst = AWSInstances(instanceDict)
+        #InstanceList.append(InstanceInst)
     
-    #list is initialized
-    # push the lists onto the dict
-
     tf = TerraformHandler()
     tf.setDataList(AWSVPCList, "vpc")
+    tf.setDataList(SubnetList, "subnet")
+    tf.setDataList(InstanceList, "instance")
 
-    tf.terraformDump()
+    #configurable destinationr region
+    tf.terraformDump('us-east-1')
         #self.vpcid = vpcDict['VpcId']
         #self.cidrblock = vpcDict['CidrBlock']
         #self.state = vpcDict['State']
