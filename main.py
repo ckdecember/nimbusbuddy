@@ -29,6 +29,8 @@ class AWSCloudBuddy():
         self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
         self.vpcExpandedKeyList = ['Tags']
 
+        self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
+        self.subnetExpandedKeyList = ['Tags']
     
     def listSubnets(self):
         self.ec2client.describe_subnets()
@@ -79,6 +81,18 @@ class AWSCloudBuddy():
         #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
     
+    def extractResource(self, slice, keyList, expandedKeyList):
+        resourceDict = {}
+        for key in keyList:
+            if key in slice:
+                # some values are actually lists, expand those lists.
+                if key in expandedKeyList:
+                    for item in slice[key]:
+                        resourceDict[key] = item['Value']
+                else:
+                    resourceDict[key] = slice[key]
+        return resourceDict
+
     def extractVPC(self, vpcslice):
         vpcDict = {}
         for key in self.vpcKeyList:
@@ -90,6 +104,18 @@ class AWSCloudBuddy():
                 else:
                     vpcDict[key] = vpcslice[key]
         return vpcDict
+
+    def extractSubnet(self, subnetslice):
+        subnetDict = {}
+        for key in self.subnetKeyList:
+            if key in subnetslice:
+                if key in self.vpcExpandedKeyList:
+                    for item in vpcslice[key]:
+                        subnetDict[key] = item['Value']
+                else:
+                    subnetDict[key] = subnetslice[key]
+        return subnetDict                
+
     
 class AWSVPC():
     def __init__(self, vpcDict):
@@ -104,6 +130,9 @@ class AWSVPC():
             self.tags = None
         self.ownerid = vpcDict['OwnerId']
 
+class AWSSubnets():
+    def __init__(self, subnetDict):
+        pass
 
 class TerraformHandler():
     def __init__(self, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
@@ -203,7 +232,6 @@ def main():
     #acb.cycleRegionInstances()
     vpcslices = acb.getVPCs()['Vpcs']
     AWSVPCList = []
-
     
     print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
