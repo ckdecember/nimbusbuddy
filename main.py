@@ -241,19 +241,18 @@ def display(region='us-east-1'):
     # then 
     rows = [x.values() for x in vpcslices]
 
-    print (vpcslices)
+    #print (vpcslices)
     # this is the holy grail
-    killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet']
+    
+    killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'Tags']
+    dictList = []
     for vpcslice in vpcslices:
         dict_variable = {key:value for (key,value) in vpcslice.items() if key not in killlist }
-        print (dict_variable)
+        dictList.append(dict_variable)
     #print (tabulate.tabulate(rows, header))
-    ## separate module later
-    #print (vpcslices)
-    #table = texttable.Texttable()
-    # going in the wrong way.  as columns 
-    #table.add_row(vpcslices)
-    #print (table.draw())
+    print (tabulate.tabulate(dictList))
+
+    print (tabulate.tabulate(vpcslices, headers='keys'))
 
 
 
