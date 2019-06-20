@@ -71,13 +71,13 @@ class AWSCloudBuddy():
                     print ("#####################")
 
     def getVPCs(self, regionname='us-west-1'):
-        return self.ec2clientdict[regionname].describe_vpcs()
+        return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']
 
     def getSubnets(self, regionname='us-west-1'):
-        return self.ec2clientdict[regionname].describe_subnets()
+        return self.ec2clientdict[regionname].describe_subnets()['Subnets']
 
     def getInstances(self, regionname='us-west-1'):
-        return self.ec2clientdict[regionname].describe_instances()
+        return self.ec2clientdict[regionname].describe_instances()['Reservations']
     
     def extractResource(self, slice, keyList, expandedKeyList):
         resourceDict = {}
@@ -187,14 +187,14 @@ class TestCloudBuddy(unittest.TestCase):
 def dosomething():
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    vpcslices = acb.getVPCs(regionname='us-east-1')['Vpcs']
+    vpcslices = acb.getVPCs(regionname='us-east-1')
     AWSVPCList = []
 
-    subnetslices = acb.getSubnets(regionname='us-east-1')['Subnets']
+    subnetslices = acb.getSubnets(regionname='us-east-1')
     #print (subnetslices)
     SubnetList = []
 
-    instanceslices = acb.getInstances(regionname='us-east-1')['Reservations']
+    instanceslices = acb.getInstances(regionname='us-east-1')
     #print (instanceslices)
     InstanceList = []
     #['Instances']
@@ -231,32 +231,44 @@ def dosomething():
 def noop():
     print ("noop")
 
+# able to list everything one by one now.
+# but need to MERGE it into sensible views
+# define VIEWS
+# Subnets join on vpcid INSIDE VPCs AND INTERNET GATEWAYS
+# EC2s join on subnets.  subnets know vpcids.(check internet gateway)
+# EC2s SecurityGroups know... instanceids???
+# i wonder if using an sql db would work better here??? 
+
 def display(region='us-east-1'):
     print ("display")
     acb = AWSCloudBuddy()
-    vpcslices = acb.getVPCs(regionname=region)['Vpcs']
-    header = vpcslices[0].keys()
-    #maybe filter the values
-    # maybe x.items()
-    # then 
-    rows = [x.values() for x in vpcslices]
-
-    #print (vpcslices)
-    # this is the holy grail
-    
+    # filter dictionaries with dict comprehension
     killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'Tags']
-    dictList = []
-    for vpcslice in vpcslices:
-        dict_variable = {key:value for (key,value) in vpcslice.items() if key not in killlist }
-        dictList.append(dict_variable)
-    #print (tabulate.tabulate(rows, header))
-    print (tabulate.tabulate(dictList))
-
-    print (tabulate.tabulate(vpcslices, headers='keys'))
-
-
-
     
+    slices = acb.getVPCs(regionname=region)
+    table = sliceDisplay(slices, region, killlist)
+    #print (table)
+
+    slices = acb.getSubnets(regionname=region)
+    table = sliceDisplay(slices, region, killlist)
+    #print (table)
+
+    slices = acb.getInstances(regionname=region)
+    slices = slices[0]['Instances']
+    allowList = ['ImageId', 'InstanceId', 'InstanceType', 'PrivateDnsName', 'PrivateIpAddress', 'PublicDnsName', 'State', 'SubnetId', 'VpcId', 'VirtualizationType', 'CpuOptions']
+    table = sliceDisplay(slices, region, killlist, allowList)
+    print (table)
+
+def sliceDisplay(slices, regionname, killlist, allowList=[]):
+    dictList = []
+    for slice in slices:
+        if not allowList:
+            dict_variable = {key:value for (key,value) in slice.items() if key not in killlist }
+        else:
+            dict_variable = {key:value for (key,value) in slice.items() if key in allowList }
+        dictList.append(dict_variable)
+    return tabulate.tabulate(dictList, headers='keys')
+
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
     parser.add_argument('command', help='Action')
@@ -267,7 +279,7 @@ def main():
     
     if args.command == 'display':
         print (args.region)
-        # check if region is valid
+        # maybe check if region is valid
         if args.region:
             display(region=args.region)
         else:

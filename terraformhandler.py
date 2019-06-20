@@ -43,7 +43,6 @@ class TerraformHandler():
                 tfcode = self.variableOutput(resourceType, data.uniqueid, data.cidrblock, data.tags)
                 fp.write(tfcode)
 
-        #
         #for data in self.resourceDictList['instance']:
             # for ami
         #    tfcode = self.variableOutput('instance', data.uniqueid, data.imageid, data.tags)
@@ -116,7 +115,7 @@ class TerraformHandler():
         print (resourceStr)
         return resourceStr
 
-    # XXX work on this
+    # -- UNUSED for now.  maybe not needed.  pending more tests
     def variableInstanceOutput(self, resourceType, varName, typeValue, description):
         variableStr = ""
         variableStr = """variable "{prefix}_{varName}" {{
