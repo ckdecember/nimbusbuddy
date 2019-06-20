@@ -3,12 +3,15 @@ Core control module for cloudbuddy
 
 """
 
+import argparse
+import unittest
+
 import boto3
 import botocore
-import hcl
-import terraformhandler
+import texttable
+import tabulate
 
-import unittest
+import terraformhandler
 
 # this will inherit aws cloud buddy OR we will use a function pointer
 class CloudBuddy:
@@ -20,12 +23,14 @@ class AWSCloudBuddy():
         self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
         self.ec2clientdict = {}
         self.dataStruct = {}
-        self.initRegionList()
-
-        self.iamclient = boto3.client('iam')
-        # probably not the best data structure for it.
+        
         regionList = self.getAllRegions()
         
+        self.initRegionList(regionList)
+
+        #self.iamclient = boto3.client('iam')
+        
+        # we only pull a subset of fields from AWS
         self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
         self.vpcExpandedKeyList = ['Tags']
 
@@ -35,26 +40,15 @@ class AWSCloudBuddy():
         self.instanceKeyList = ['InstanceId', 'InstanceType', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
         self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
     
-    def listSubnets(self):
-        self.ec2client.describe_subnets()
-    
-    def listInstances(self, region):
-        instances = self.ec2clientdict[region].describe_instances()
-        return instances
-
-    def listVPCs(self):
-        self.ec2client.describe_vpcs()
-
-    def listUsers(self):
-        self.iamclient.list_users()
-
+    def getSecurityGroups(self):
+        return self.ec2client.describe_security_groups()
+        
     def getAllRegions(self):
         fullregionlist = self.ec2client.describe_regions()
         regionlist = [i['RegionName'] for i in fullregionlist['Regions']]
         return regionlist
 
-    def initRegionList(self):
-        regionList = self.getAllRegions()
+    def initRegionList(self, regionList):
         for region in regionList:
             self.ec2clientdict[region] = boto3.client('ec2', region_name=region)
     
@@ -63,7 +57,7 @@ class AWSCloudBuddy():
         print ("Start")
         for region in regionList:
             print (region)
-            instances = self.listInstances(region)
+            instances = self.getInstances(region)
             for reservation in instances['Reservations']:
                 for reservedInstance in reservation['Instances']:
                     #print (reservedInstance)
@@ -77,7 +71,6 @@ class AWSCloudBuddy():
                     print ("#####################")
 
     def getVPCs(self, regionname='us-west-1'):
-        #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
 
     def getSubnets(self, regionname='us-west-1'):
@@ -105,6 +98,14 @@ class AWSCloudBuddy():
             if key in slice:
                 resourceDict[key] = slice[key]
         return resourceDict
+    
+    def displayAWS(self):
+        # client should be up already.
+        # or init a crazy structure?
+        print ("displayAWS")
+        vpcs = self.getVPCs()
+        print (vpcs)
+        pass
 
 class AWSVPC():
     def __init__(self, vpcDict):
@@ -183,7 +184,7 @@ class TestCloudBuddy(unittest.TestCase):
     #    client = boto3.client('ec2')
     #    isinstance(client.describe_regions(),type(list))
 
-def main():
+def dosomething():
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
     vpcslices = acb.getVPCs(regionname='us-east-1')['Vpcs']
@@ -225,26 +226,55 @@ def main():
     tf.setDataList(SubnetList, "subnet")
     tf.setDataList(InstanceList, "instance")
 
-    #configurable destinationr region
     tf.terraformDump('us-east-1')
-        #self.vpcid = vpcDict['VpcId']
-        #self.cidrblock = vpcDict['CidrBlock']
-        #self.state = vpcDict['State']
-        #if 'Tags' in vpcDict:
-        #    self.tags = vpcDict['Tags']
-        #else:
-        #    self.tags = None
-        #self.ownerid = vpcDict['OwnerId']
+
+def noop():
+    print ("noop")
+
+def display(region='us-east-1'):
+    print ("display")
+    acb = AWSCloudBuddy()
+    vpcslices = acb.getVPCs(regionname=region)['Vpcs']
+    header = vpcslices[0].keys()
+    #maybe filter the values
+    # maybe x.items()
+    # then 
+    rows = [x.values() for x in vpcslices]
+
+    print (vpcslices)
+    # this is the holy grail
+    killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet']
+    for vpcslice in vpcslices:
+        dict_variable = {key:value for (key,value) in vpcslice.items() if key not in killlist }
+        print (dict_variable)
+    #print (tabulate.tabulate(rows, header))
+    ## separate module later
+    #print (vpcslices)
+    #table = texttable.Texttable()
+    # going in the wrong way.  as columns 
+    #table.add_row(vpcslices)
+    #print (table.draw())
 
 
-    #print (acb.listInstances('us-east-2'))
-    #acb.initRegionList()
-    #for key in acb.ec2clientdict.keys():
-        #print (key)
-        #print (acb.ec2clientdict[key])
-    #regionlist = acb.getAllRegions()
-    #print (regionlist)
 
+    
+def main():
+    parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
+    parser.add_argument('command', help='Action')
+
+    parser.add_argument('--region')
+
+    args = parser.parse_args()
+    
+    if args.command == 'display':
+        print (args.region)
+        # check if region is valid
+        if args.region:
+            display(region=args.region)
+        else:
+            display()
+    else:
+        noop()
 
 if  __name__ =='__main__': main()
 

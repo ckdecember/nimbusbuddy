@@ -39,6 +39,8 @@ Versioning or storing of older configuration is also on the list, but might get 
 
 # given a region and aws credentials...
 
+# VPCs
+
 # able to move from AWS live to terraform config somewhat.
 # clean that up a bit to handle more than one vpc
 # save the existing lists somehow in a datastructure or serialize.
