@@ -24,6 +24,13 @@ Tech
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
 # TODO
+
+Outputting to terraform configurations is somewhat working. Will need to add the visualization components and their output modules (text and html are the current goals).
+
+Will also need to add extraction for securitygroups and internet gateways as well.
+
+Versioning or storing of older configuration is also on the list, but might get scaled back depending on time.
+
 - add features -> display network
 - create terraform config
 - save config (custom settings)

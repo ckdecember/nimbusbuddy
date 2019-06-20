@@ -25,8 +25,7 @@ class AWSCloudBuddy():
         self.iamclient = boto3.client('iam')
         # probably not the best data structure for it.
         regionList = self.getAllRegions()
-        #self.initDataStruct(regionList)
-
+        
         self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
         self.vpcExpandedKeyList = ['Tags']
 
@@ -77,10 +76,6 @@ class AWSCloudBuddy():
                             print ("{} {}".format(instancekey, reservedInstance[instancekey]))
                     print ("#####################")
 
-    def initDataStruct(self, regionList):
-        for region in regionList:
-            self.dataStruct[region] = []
-    
     def getVPCs(self, regionname='us-west-1'):
         #vpc_id, cidrblock, tags, state, ownerid 
         return self.ec2clientdict[regionname].describe_vpcs()
