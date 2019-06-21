@@ -184,17 +184,17 @@ class TestCloudBuddy(unittest.TestCase):
     #    client = boto3.client('ec2')
     #    isinstance(client.describe_regions(),type(list))
 
-def dosomething():
+def dosomething(regionname='us-east-1'):
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    vpcslices = acb.getVPCs(regionname='us-east-1')
+    vpcslices = acb.getVPCs(regionname=regionname)
     AWSVPCList = []
 
-    subnetslices = acb.getSubnets(regionname='us-east-1')
+    subnetslices = acb.getSubnets(regionname=regionname)
     #print (subnetslices)
     SubnetList = []
 
-    instanceslices = acb.getInstances(regionname='us-east-1')
+    instanceslices = acb.getInstances(regionname=regionname)
     #print (instanceslices)
     InstanceList = []
     #['Instances']
@@ -216,10 +216,10 @@ def dosomething():
         #print (instanceslice['Instances'][0])
         # instances are handled differently
         #instanceDict = acb.extractResource(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
-        instanceDict = acb.extractInstance(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
-        
-        InstanceInst = AWSInstances(instanceDict)
-        InstanceList.append(InstanceInst)
+        for instanceInSlice in instanceslice['Instances']:
+            instanceDict = acb.extractInstance(instanceInSlice, acb.instanceKeyList, acb.instanceExpandedKeyList)
+            InstanceInst = AWSInstances(instanceDict)
+            InstanceList.append(InstanceInst)
     
     tf = terraformhandler.TerraformHandler()
     tf.setDataList(AWSVPCList, "vpc")
@@ -231,7 +231,6 @@ def dosomething():
 def noop():
     print ("noop")
 
-# able to list everything one by one now.
 # but need to MERGE it into sensible views
 # define VIEWS
 # Subnets join on vpcid INSIDE VPCs AND INTERNET GATEWAYS
@@ -258,14 +257,13 @@ def display(region='us-east-1'):
     dictList = []
     slices = acb.getInstances(regionname=region)
     # iterate slices.
-
-
+    
+    table = []
     for slice in slices:
         allowList = ['ImageId', 'InstanceId', 'InstanceType', 'PrivateDnsName', 'PrivateIpAddress', 'PublicDnsName', 'State', 'SubnetId', 'VpcId', 'VirtualizationType', 'CpuOptions']
         table = sliceDisplay(dictList, slice['Instances'], region, killlist, allowList)
 
     print (tabulate.tabulate(table, headers='keys'))
-
     #slices = slices[0]['Instances']
 
 def sliceDisplay(dictList, slices, regionname, killlist, allowList=[]):
@@ -295,7 +293,10 @@ def main():
         else:
             display()
     elif args.command == 'something':
-        dosomething()
+        if args.region:
+            dosomething(regionname=args.region)
+        else:
+            dosomething()
     else:
         noop()
 
