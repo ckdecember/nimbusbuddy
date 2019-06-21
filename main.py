@@ -98,17 +98,23 @@ class AWSCloudBuddy():
             # need to add expansion for certain keys, maybe just drop 'values' in here.
             if key in slice:
                 #value could be list, OR dictionary
-                #if key in expandedKeyList:
-                #    for sliceitem in slice[key]:
+                if key in expandedKeyList:
+                    flattenedString = ''
+                    for sliceitem in slice[key]:
                         # check type for list or dict.
-                #        if type(sliceitem) is list:
-                #            pass
-                #        elif type(sliceitem) is dict:
-                #            print (sliceitem)
-                #            resourceDict[key] = sliceitem.values()
-                #else:
-                #    resourceDict[key] = slice[key]
-                resourceDict[key] = slice[key]
+                        if type(sliceitem) is list:
+                            for subitem in sliceitem:
+                                if key == 'Key':
+                                    subitem.pop(key)
+                                #flattenedString += ' '.join("{!r}".format(value) for (key, value) in subitem.items())
+                                flattenedString += ' '.join("{}".format(value) for (key, value) in subitem.items() if key != 'Key')
+                        elif type(sliceitem) is dict:
+                            #resourceDict[key] = sliceitem.values()
+                            flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key')
+                            #print (flattenedString)
+                    resourceDict[key] = flattenedString
+                else:
+                    resourceDict[key] = slice[key]
         return resourceDict
     
     def displayAWS(self):
@@ -233,6 +239,8 @@ def outputTerraform(region, targetRegion):
             if instanceInSlice['State']['Name'] == 'terminated':
                 continue
             instanceDict = acb.extractInstance(instanceInSlice, acb.instanceKeyList, acb.instanceExpandedKeyList)
+            print ("instance dict")
+            print (instanceDict)
             InstanceInst = AWSInstances(instanceDict)
             InstanceList.append(InstanceInst)
     
