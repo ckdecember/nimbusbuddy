@@ -184,22 +184,21 @@ class TestCloudBuddy(unittest.TestCase):
     #    client = boto3.client('ec2')
     #    isinstance(client.describe_regions(),type(list))
 
-def dosomething(regionname='us-east-1'):
+def outputTerraform(region, targetRegion):
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    vpcslices = acb.getVPCs(regionname=regionname)
+    vpcslices = acb.getVPCs(regionname=region)
     AWSVPCList = []
 
-    subnetslices = acb.getSubnets(regionname=regionname)
+    subnetslices = acb.getSubnets(regionname=region)
     #print (subnetslices)
     SubnetList = []
 
-    instanceslices = acb.getInstances(regionname=regionname)
+    instanceslices = acb.getInstances(regionname=region)
     #print (instanceslices)
     InstanceList = []
     #['Instances']
     
-    print ("number of vpcs is {}".format(len(vpcslices)))
     for vpcslice in vpcslices:
         #vpcDict = acb.extractVPC(vpcslice)
         vpcDict = acb.extractResource(vpcslice, acb.vpcKeyList, acb.vpcExpandedKeyList)
@@ -226,7 +225,7 @@ def dosomething(regionname='us-east-1'):
     tf.setDataList(SubnetList, "subnet")
     tf.setDataList(InstanceList, "instance")
 
-    tf.terraformDump('us-east-1')
+    tf.terraformDump(region, targetRegion)
 
 def noop():
     print ("noop")
@@ -234,11 +233,11 @@ def noop():
 # but need to MERGE it into sensible views
 # define VIEWS
 # Subnets join on vpcid INSIDE VPCs AND INTERNET GATEWAYS
-# EC2s join on subnets.  subnets know vpcids.(check internet gateway)
+# EC2s join on subnets.  subnets know v pcids.(check internet gateway)
 # EC2s SecurityGroups know... instanceids???
 # i wonder if using an sql db would work better here??? 
 
-def display(region='us-east-1'):
+def display(region):
     print ("display")
     acb = AWSCloudBuddy()
     # filter dictionaries with dict comprehension
@@ -264,8 +263,7 @@ def display(region='us-east-1'):
         table = sliceDisplay(dictList, slice['Instances'], region, killlist, allowList)
 
     print (tabulate.tabulate(table, headers='keys'))
-    #slices = slices[0]['Instances']
-
+    
 def sliceDisplay(dictList, slices, regionname, killlist, allowList=[]):
     #dictList = []
     for slice in slices:
@@ -282,6 +280,7 @@ def main():
     parser.add_argument('command', help='Action')
 
     parser.add_argument('--region')
+    parser.add_argument('--targetregion')
 
     args = parser.parse_args()
     
@@ -292,11 +291,14 @@ def main():
             display(region=args.region)
         else:
             display()
-    elif args.command == 'something':
-        if args.region:
-            dosomething(regionname=args.region)
+    elif args.command == 'terraform':
+        if args.region and args.targetregion:
+            outputTerraform(args.region, args.targetregion)
+        elif args.region:
+            print ('no targetregion set, defaulting to region = targetregion')
+            outputTerraform(args.region, args.region)
         else:
-            dosomething()
+            print ('need args')
     else:
         noop()
 

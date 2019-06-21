@@ -5,7 +5,7 @@ class TerraformHandler():
         self.variableFileName = variableFileName
         self.resourceDictList = {}
     
-    def terraformDump(self, region):
+    def terraformDump(self, region, targetRegion):
         # getSecurityGroups()
         # getGateways()
         resourceTypeList = ['vpc', 'subnet']
@@ -15,7 +15,7 @@ class TerraformHandler():
         # you can change the region here
         # by default, no region, but maybe allow you to pass a new region here.
          
-        tfcode = self.providerOutput(region=region)
+        tfcode = self.providerOutput(region=targetRegion)
         fp.write(tfcode)
 
         tfcode = ''
