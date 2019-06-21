@@ -258,11 +258,10 @@ def howtomerge(region):
     vpcid = "vpc-850c16ed"
     #vpcid = "vpc-0cfd1cd66295ae2e5"
     test = [item for item in subnetslices if item["VpcId"] == vpcid]
-#    print ("test with {}".format(vpcid))
-
+    print ("test with {}".format(vpcid))
     
- #   for i in test:
- #       print (i['SubnetId'])
+    for i in test:
+       print (i['SubnetId'])
     
 
 

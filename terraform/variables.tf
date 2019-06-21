@@ -1,29 +1,20 @@
-variable "ami_id" {
-    description = "incoming ami id"
-    default = "ami-06397100adf427136"
-}
+variable "var_vpc-02e38283227fffc09" {
+                description = "new VPC"
+                default = "172.31.0.0/16"
+            }
 
-variable "snoopdoggydog" {
-    description = "hmmm"
-    default = "I'm a lich! A dracoLich!"
-}
+variable "var_vpc-db4045bc" {
+                description = "None"
+                default = "172.31.0.0/16"
+            }
 
-variable "vpc_cidr" {
-    description = "VPC's CIDR address"
-    default = "10.0.0.0/16"
-}
+variable "var_subnet-0ce2f33a4d9dc5163" {
+                description = "None"
+                default = "172.31.16.0/20"
+            }
 
-variables "subnet_cidr" {
-    description = "Subnet's CIDR address"
-    default = "10.0.1.0/24"
-}
+variable "var_subnet-0ae683a4fe4e3cabc" {
+                description = "Land of Robots"
+                default = "172.31.0.0/24"
+            }
 
-variables "region" {
-    description = "AWS Region"
-    default = "us-west-1"
-}
-
-variables "instance_type" {
-    description = "AWS cpu/power type"
-    default = "t2.micro"
-}

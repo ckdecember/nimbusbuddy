@@ -10,21 +10,13 @@ class TerraformHandler():
         # getGateways()
         resourceTypeList = ['vpc', 'subnet']
 
-        # making the main.tf file equivalent        
+        # making the MAIN.TF file equivalent        
         fp = open(self.mainConfigFileName, 'w')
-        # you can change the region here
-        # by default, no region, but maybe allow you to pass a new region here.
-         
+
         tfcode = self.providerOutput(region=targetRegion)
         fp.write(tfcode)
 
-        # break it out per zone
-        #for resourceType in resourceTypeList:
-        #    tfcode = ''
-        #    for data in self.resourceDictList[resourceType]:
-                # can't always rely on this.  make it a new identifier tag during init
-        #        tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
-        #    fp.write(tfcode)
+        # for VPCS
         vpcForDefaultSubnet = ''
         tfcode = ''
         for data in self.resourceDictList['vpc']:
@@ -34,6 +26,7 @@ class TerraformHandler():
                 tfcode += self.resourceOutput('vpc', data.vpcid, data.uniqueid, data.tags, data.vpcid)
         fp.write(tfcode)
 
+        # for SUBNETS
         tfcode = ''
         for data in self.resourceDictList['subnet']:
             if data.vpcid == vpcForDefaultSubnet:
@@ -41,6 +34,7 @@ class TerraformHandler():
             tfcode += self.resourceOutput('subnet', data.vpcid, data.uniqueid, data.tags, data.vpcid)
         fp.write(tfcode)
         
+        # for INSTANCES
         tfcode = ''
         for data in self.resourceDictList['instance']:
             tfcode = self.resourceInstanceOutput(data.instanceid, data.instancetype, data.imageid, data.subnetid, data.tags)
