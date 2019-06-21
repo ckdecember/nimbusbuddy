@@ -245,29 +245,39 @@ def display(region='us-east-1'):
     # filter dictionaries with dict comprehension
     killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'Tags']
     
-    slices = acb.getVPCs(regionname=region)
-    table = sliceDisplay(slices, region, killlist)
-    #print (table)
-
-    slices = acb.getSubnets(regionname=region)
-    table = sliceDisplay(slices, region, killlist)
-    #print (table)
-
-    slices = acb.getInstances(regionname=region)
-    slices = slices[0]['Instances']
-    allowList = ['ImageId', 'InstanceId', 'InstanceType', 'PrivateDnsName', 'PrivateIpAddress', 'PublicDnsName', 'State', 'SubnetId', 'VpcId', 'VirtualizationType', 'CpuOptions']
-    table = sliceDisplay(slices, region, killlist, allowList)
-    print (table)
-
-def sliceDisplay(slices, regionname, killlist, allowList=[]):
     dictList = []
+    slices = acb.getVPCs(regionname=region)
+    table = sliceDisplay(dictList, slices, region, killlist)
+    #print (table)
+
+    dictList = []
+    slices = acb.getSubnets(regionname=region)
+    table = sliceDisplay(dictList, slices, region, killlist)
+    #print (table)
+
+    dictList = []
+    slices = acb.getInstances(regionname=region)
+    # iterate slices.
+
+
+    for slice in slices:
+        allowList = ['ImageId', 'InstanceId', 'InstanceType', 'PrivateDnsName', 'PrivateIpAddress', 'PublicDnsName', 'State', 'SubnetId', 'VpcId', 'VirtualizationType', 'CpuOptions']
+        table = sliceDisplay(dictList, slice['Instances'], region, killlist, allowList)
+
+    print (tabulate.tabulate(table, headers='keys'))
+
+    #slices = slices[0]['Instances']
+
+def sliceDisplay(dictList, slices, regionname, killlist, allowList=[]):
+    #dictList = []
     for slice in slices:
         if not allowList:
             dict_variable = {key:value for (key,value) in slice.items() if key not in killlist }
         else:
             dict_variable = {key:value for (key,value) in slice.items() if key in allowList }
         dictList.append(dict_variable)
-    return tabulate.tabulate(dictList, headers='keys')
+    return dictList
+    #return tabulate.tabulate(dictList, headers='keys')
 
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
@@ -284,6 +294,8 @@ def main():
             display(region=args.region)
         else:
             display()
+    elif args.command == 'something':
+        dosomething()
     else:
         noop()
 
