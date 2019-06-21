@@ -28,6 +28,7 @@ Tech
 in extractinstance, expand values
 change subnets somehow
 
+should skip default subnets and vpccs
 maybe skip terminated instances
 
 #maybe keep it mostly in dicts?  remove the class abstraction perhaps?

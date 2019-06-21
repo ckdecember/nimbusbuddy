@@ -31,7 +31,7 @@ class AWSCloudBuddy():
         #self.iamclient = boto3.client('iam')
         
         # we only pull a subset of fields from AWS
-        self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
+        self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
         self.vpcExpandedKeyList = ['Tags']
 
         self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
@@ -95,7 +95,7 @@ class AWSCloudBuddy():
     def extractInstance(self, slice, keyList, expandedKeyList):
         resourceDict = {}
         for key in keyList:
-            # need to add expansion for certain keys, maybe just drop 'values' in here.
+            # need to add expansion for certain keys
             if key in slice:
                 #value could be list, OR dictionary
                 if key in expandedKeyList:
@@ -104,14 +104,9 @@ class AWSCloudBuddy():
                         # check type for list or dict.
                         if type(sliceitem) is list:
                             for subitem in sliceitem:
-                                if key == 'Key':
-                                    subitem.pop(key)
-                                #flattenedString += ' '.join("{!r}".format(value) for (key, value) in subitem.items())
                                 flattenedString += ' '.join("{}".format(value) for (key, value) in subitem.items() if key != 'Key')
                         elif type(sliceitem) is dict:
-                            #resourceDict[key] = sliceitem.values()
-                            flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key')
-                            #print (flattenedString)
+                            flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key') 
                     resourceDict[key] = flattenedString
                 else:
                     resourceDict[key] = slice[key]
@@ -123,7 +118,6 @@ class AWSCloudBuddy():
         print ("displayAWS")
         vpcs = self.getVPCs()
         print (vpcs)
-        pass
 
 class AWSVPC():
     def __init__(self, vpcDict):
@@ -138,6 +132,7 @@ class AWSVPC():
             self.tags = None
         self.ownerid = vpcDict['OwnerId']
         self.uniqueid = vpcDict['VpcId']
+        self.isDefault = vpcDict['IsDefault']
 
 class AWSSubnet():
     def __init__(self, subnetDict):
@@ -231,10 +226,6 @@ def outputTerraform(region, targetRegion):
         SubnetList.append(SubnetInst)
 
     for instanceslice in instanceslices:
-        #print (instanceslice)
-        #print (instanceslice['Instances'][0])
-        # instances are handled differently
-        #instanceDict = acb.extractResource(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
         for instanceInSlice in instanceslice['Instances']:
             if instanceInSlice['State']['Name'] == 'terminated':
                 continue
@@ -261,16 +252,7 @@ def howtomerge(region):
     vpcslices = acb.getVPCs(regionname=region)
     subnetslices = acb.getSubnets(regionname=region)
 
-    #list of dicts
-    # maybe pull individual vpcids
-    # filter subnets by individual vpcsids
-    #for subnetslice in subnetslices:
-    #    dictfiltered = {key: value for key, value in subnetslice.items() if key in ['VpcId', 'SubnetId']}
-    #    dictfiltered = {key: value for key, value in dictfiltered.items() if 'vpc-850c16ed' in value}
-    #    print (dictfiltered)
-
     #vpc-850c16ed
-
     # variable vpcid
 
     vpcid = "vpc-850c16ed"

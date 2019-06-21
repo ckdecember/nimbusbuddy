@@ -18,14 +18,28 @@ class TerraformHandler():
         tfcode = self.providerOutput(region=targetRegion)
         fp.write(tfcode)
 
-        tfcode = ''
-
-        for resourceType in resourceTypeList:
-            tfcode = ''
-            for data in self.resourceDictList[resourceType]:
+        # break it out per zone
+        #for resourceType in resourceTypeList:
+        #    tfcode = ''
+        #    for data in self.resourceDictList[resourceType]:
                 # can't always rely on this.  make it a new identifier tag during init
-                tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
-            fp.write(tfcode)
+        #        tfcode += self.resourceOutput(resourceType, data.vpcid, data.uniqueid, data.tags, data.vpcid)
+        #    fp.write(tfcode)
+        vpcForDefaultSubnet = ''
+        tfcode = ''
+        for data in self.resourceDictList['vpc']:
+            if data.isDefault:
+                vpcForDefaultSubnet = data.vpcid
+            else:
+                tfcode += self.resourceOutput('vpc', data.vpcid, data.uniqueid, data.tags, data.vpcid)
+        fp.write(tfcode)
+
+        tfcode = ''
+        for data in self.resourceDictList['subnet']:
+            if data.vpcid == vpcForDefaultSubnet:
+                continue
+            tfcode += self.resourceOutput('subnet', data.vpcid, data.uniqueid, data.tags, data.vpcid)
+        fp.write(tfcode)
         
         tfcode = ''
         for data in self.resourceDictList['instance']:
