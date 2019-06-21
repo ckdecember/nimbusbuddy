@@ -199,7 +199,7 @@ class TestCloudBuddy(unittest.TestCase):
     #    client = boto3.client('ec2')
     #    isinstance(client.describe_regions(),type(list))
 
-def outputTerraform(region, targetRegion):
+def outputTerraform(region, targetRegion, ami):
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
     vpcslices = acb.getVPCs(regionname=region)
@@ -230,8 +230,8 @@ def outputTerraform(region, targetRegion):
             if instanceInSlice['State']['Name'] == 'terminated':
                 continue
             instanceDict = acb.extractInstance(instanceInSlice, acb.instanceKeyList, acb.instanceExpandedKeyList)
-            print ("instance dict")
-            print (instanceDict)
+            if ami:
+                instanceDict['ImageId'] = ami
             InstanceInst = AWSInstances(instanceDict)
             InstanceList.append(InstanceInst)
     
@@ -317,6 +317,7 @@ def main():
 
     parser.add_argument('--region')
     parser.add_argument('--targetregion')
+    parser.add_argument('--ami')
 
     args = parser.parse_args()
     
@@ -330,11 +331,15 @@ def main():
         else:
             display()
     elif args.command == 'terraform':
+        ami = None
+        if args.ami:
+            ami = args.ami
+
         if args.region and args.targetregion:
-            outputTerraform(args.region, args.targetregion)
+            outputTerraform(args.region, args.targetregion, ami)
         elif args.region:
             print ('no target region set, defaulting to region = targetregion')
-            outputTerraform(args.region, args.region)
+            outputTerraform(args.region, args.region, ami)
         else:
             print ('need args')
     elif args.command == 'merge':
