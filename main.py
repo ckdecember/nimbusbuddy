@@ -79,6 +79,38 @@ class AWSCloudBuddy():
     def getInstances(self, regionname):
         return self.ec2clientdict[regionname].describe_instances()['Reservations']
     
+    def getProcessedVPCs(self, region):
+        vpcslices = self.getVPCs(regionname=region)
+        AWSVPCList = []
+        for vpcslice in vpcslices:
+            vpcDict = self.extractResource(vpcslice, self.vpcKeyList, self.vpcExpandedKeyList)
+            AWSVPCinst = AWSVPC(vpcDict)
+            AWSVPCList.append(AWSVPCinst)
+        return AWSVPCList
+
+    def getProcessedSubnets(self, region):    
+        subnetslices = self.getSubnets(regionname=region)
+        SubnetList = []
+        for subnetslice in subnetslices:
+            subnetDict = self.extractResource(subnetslice, self.subnetKeyList, self.subnetExpandedKeyList)
+            SubnetInst = AWSSubnet(subnetDict)
+            SubnetList.append(SubnetInst)
+        return SubnetList
+    
+    def getProcessedInstances(self, region):
+        instanceslices = self.getInstances(regionname=region)
+        InstanceList = []
+        for instanceslice in instanceslices:
+            for instanceInSlice in instanceslice['Instances']:
+                if instanceInSlice['State']['Name'] == 'terminated':
+                    continue
+                instanceDict = self.extractInstance(instanceInSlice, self.instanceKeyList, self.instanceExpandedKeyList)
+                if ami:
+                    instanceDict['ImageId'] = ami
+                InstanceInst = AWSInstances(instanceDict)
+                InstanceList.append(InstanceInst)
+        return InstanceList
+
     def extractResource(self, slice, keyList, expandedKeyList):
         resourceDict = {}
         for key in keyList:
@@ -202,39 +234,11 @@ class TestCloudBuddy(unittest.TestCase):
 def outputTerraform(region, targetRegion, ami):
     acb = AWSCloudBuddy()
     #acb.cycleRegionInstances()
-    vpcslices = acb.getVPCs(regionname=region)
-    AWSVPCList = []
 
-    subnetslices = acb.getSubnets(regionname=region)
-    #print (subnetslices)
-    SubnetList = []
-
-    instanceslices = acb.getInstances(regionname=region)
-    #print (instanceslices)
-    InstanceList = []
-    #['Instances']
-    
-    for vpcslice in vpcslices:
-        #vpcDict = acb.extractVPC(vpcslice)
-        vpcDict = acb.extractResource(vpcslice, acb.vpcKeyList, acb.vpcExpandedKeyList)
-        AWSVPCinst = AWSVPC(vpcDict)
-        AWSVPCList.append(AWSVPCinst)
-    
-    for subnetslice in subnetslices:
-        subnetDict = acb.extractResource(subnetslice, acb.subnetKeyList, acb.subnetExpandedKeyList)
-        SubnetInst = AWSSubnet(subnetDict)
-        SubnetList.append(SubnetInst)
-
-    for instanceslice in instanceslices:
-        for instanceInSlice in instanceslice['Instances']:
-            if instanceInSlice['State']['Name'] == 'terminated':
-                continue
-            instanceDict = acb.extractInstance(instanceInSlice, acb.instanceKeyList, acb.instanceExpandedKeyList)
-            if ami:
-                instanceDict['ImageId'] = ami
-            InstanceInst = AWSInstances(instanceDict)
-            InstanceList.append(InstanceInst)
-    
+    AWSVPCList = acb.getProcessedVPCs(region=region)
+    SubnetList = acb.getProcessedSubnets(region=region)
+    InstanceList = acb.getProcessedInstances(region=region)
+        
     tf = terraformhandler.TerraformHandler()
     tf.setDataList(AWSVPCList, "vpc")
     tf.setDataList(SubnetList, "subnet")
@@ -248,26 +252,38 @@ def noop():
 def howtomerge(region):
     # get vpcs first
     acb = AWSCloudBuddy()
-    #acb.cycleRegionInstances()
+    # acb.cycleRegionInstances()
+    # goes away
+    #vpcid = 'vpc-02e38283227fffc09'
+    #   vpcsubnetList.append([item for item in subnetslices if item["VpcId"] == vpcslice])
+
     vpcslices = acb.getVPCs(regionname=region)
+    AWSVPCList = []
+    for vpcslice in vpcslices:
+        #vpcDict = acb.extractVPC(vpcslice)
+        vpcDict = acb.extractResource(vpcslice, acb.vpcKeyList, acb.vpcExpandedKeyList)
+        AWSVPCinst = AWSVPC(vpcDict)
+        AWSVPCList.append(AWSVPCinst)
+
     subnetslices = acb.getSubnets(regionname=region)
+    #print (subnetslices)
+    SubnetList = []
+    for subnetslice in subnetslices:
+        subnetDict = acb.extractResource(subnetslice, acb.subnetKeyList, acb.subnetExpandedKeyList)
+        SubnetInst = AWSSubnet(subnetDict)
+        SubnetList.append(SubnetInst)
 
-    #vpc-850c16ed
-    # variable vpcid
+    finallist = []
+    subnetVpcDict = {}
 
-    vpcid = "vpc-850c16ed"
-    #vpcid = "vpc-0cfd1cd66295ae2e5"
-    test = [item for item in subnetslices if item["VpcId"] == vpcid]
-    print ("test with {}".format(vpcid))
-    
-    for i in test:
-       print (i['SubnetId'])
-    
+    for vpc in AWSVPCList:
+        for subnet in SubnetList:
+            if subnet.vpcid == vpc.vpcid:
+                subnetVpcDict[subnet.vpcid] = [subnet, vpc]
 
+    # generate a list of dictionaries.
+    print (tabulate.tabulate(subnetVpcDict, headers='keys'))
 
-# but need to MERGE it into sensible views
-# define VIEWS
-# Subnets join on vpcid INSIDE VPCs AND INTERNET GATEWAYS
 # EC2s join on subnets.  subnets know v pcids.(check internet gateway)
 # EC2s SecurityGroups know... instanceids???
 # i wonder if using an sql db would work better here??? 
