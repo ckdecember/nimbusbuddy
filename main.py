@@ -70,13 +70,13 @@ class AWSCloudBuddy():
                             print ("{} {}".format(instancekey, reservedInstance[instancekey]))
                     print ("#####################")
 
-    def getVPCs(self, regionname='us-west-1'):
+    def getVPCs(self, regionname):
         return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']
 
-    def getSubnets(self, regionname='us-west-1'):
+    def getSubnets(self, regionname):
         return self.ec2clientdict[regionname].describe_subnets()['Subnets']
 
-    def getInstances(self, regionname='us-west-1'):
+    def getInstances(self, regionname):
         return self.ec2clientdict[regionname].describe_instances()['Reservations']
     
     def extractResource(self, slice, keyList, expandedKeyList):
@@ -95,7 +95,19 @@ class AWSCloudBuddy():
     def extractInstance(self, slice, keyList, expandedKeyList):
         resourceDict = {}
         for key in keyList:
+            # need to add expansion for certain keys, maybe just drop 'values' in here.
             if key in slice:
+                #value could be list, OR dictionary
+                #if key in expandedKeyList:
+                #    for sliceitem in slice[key]:
+                        # check type for list or dict.
+                #        if type(sliceitem) is list:
+                #            pass
+                #        elif type(sliceitem) is dict:
+                #            print (sliceitem)
+                #            resourceDict[key] = sliceitem.values()
+                #else:
+                #    resourceDict[key] = slice[key]
                 resourceDict[key] = slice[key]
         return resourceDict
     
@@ -147,6 +159,8 @@ class AWSInstances():
         self.instanceid = instanceDict['InstanceId']
         self.imageid = instanceDict['ImageId']
         self.privateipaddress = instanceDict['PrivateIpAddress']
+
+        
         self.publicdnsname = instanceDict['PublicDnsName']
         self.subnetid = instanceDict['SubnetId']
 
@@ -216,6 +230,8 @@ def outputTerraform(region, targetRegion):
         # instances are handled differently
         #instanceDict = acb.extractResource(instanceslice['Instances'][0], acb.instanceKeyList, acb.instanceExpandedKeyList)
         for instanceInSlice in instanceslice['Instances']:
+            if instanceInSlice['State']['Name'] == 'terminated':
+                continue
             instanceDict = acb.extractInstance(instanceInSlice, acb.instanceKeyList, acb.instanceExpandedKeyList)
             InstanceInst = AWSInstances(instanceDict)
             InstanceList.append(InstanceInst)
@@ -229,6 +245,36 @@ def outputTerraform(region, targetRegion):
 
 def noop():
     print ("noop")
+
+def howtomerge(region):
+    # get vpcs first
+    acb = AWSCloudBuddy()
+    #acb.cycleRegionInstances()
+    vpcslices = acb.getVPCs(regionname=region)
+    subnetslices = acb.getSubnets(regionname=region)
+
+    #list of dicts
+    # maybe pull individual vpcids
+    # filter subnets by individual vpcsids
+    #for subnetslice in subnetslices:
+    #    dictfiltered = {key: value for key, value in subnetslice.items() if key in ['VpcId', 'SubnetId']}
+    #    dictfiltered = {key: value for key, value in dictfiltered.items() if 'vpc-850c16ed' in value}
+    #    print (dictfiltered)
+
+    #vpc-850c16ed
+
+    # variable vpcid
+
+    vpcid = "vpc-850c16ed"
+    #vpcid = "vpc-0cfd1cd66295ae2e5"
+    test = [item for item in subnetslices if item["VpcId"] == vpcid]
+#    print ("test with {}".format(vpcid))
+
+    
+ #   for i in test:
+ #       print (i['SubnetId'])
+    
+
 
 # but need to MERGE it into sensible views
 # define VIEWS
@@ -284,6 +330,8 @@ def main():
 
     args = parser.parse_args()
     
+    #make region a requirement for some?
+
     if args.command == 'display':
         print (args.region)
         # maybe check if region is valid
@@ -295,10 +343,12 @@ def main():
         if args.region and args.targetregion:
             outputTerraform(args.region, args.targetregion)
         elif args.region:
-            print ('no targetregion set, defaulting to region = targetregion')
+            print ('no target region set, defaulting to region = targetregion')
             outputTerraform(args.region, args.region)
         else:
             print ('need args')
+    elif args.command == 'merge':
+        howtomerge(args.region)
     else:
         noop()
 

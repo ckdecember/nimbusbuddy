@@ -25,7 +25,13 @@ Tech
 
 # TODO
 
-Outputting to terraform configurations is somewhat working. Will need to add the visualization components and their output modules (text and html are the current goals).
+in extractinstance, expand values
+change subnets somehow
+
+maybe skip terminated instances
+
+#maybe keep it mostly in dicts?  remove the class abstraction perhaps?
+
 
 Will also need to add extraction for securitygroups and internet gateways as well.
 
