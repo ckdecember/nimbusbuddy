@@ -14,11 +14,12 @@ import tabulate
 import terraformhandler
 
 # this will inherit aws cloud buddy OR we will use a function pointer
-class CloudBuddy:
+class NimbusBuddy:
     def __init__(self):
         pass
     
-class AWSCloudBuddy():
+class AWSNimbusBuddy():
+    """ Hey I'm a NimbusBuddy """
     def __init__(self):
         self.ec2client = boto3.client('ec2', region_name = 'us-east-2')
         self.ec2clientdict = {}
@@ -105,8 +106,9 @@ class AWSCloudBuddy():
                 if instanceInSlice['State']['Name'] == 'terminated':
                     continue
                 instanceDict = self.extractInstance(instanceInSlice, self.instanceKeyList, self.instanceExpandedKeyList)
-                if ami:
-                    instanceDict['ImageId'] = ami
+                #
+                #if ami:
+                #    instanceDict['ImageId'] = ami
                 InstanceInst = AWSInstances(instanceDict)
                 InstanceList.append(InstanceInst)
         return InstanceList
@@ -180,6 +182,7 @@ class AWSSubnet():
         self.availabilityzone = subnetDict['AvailabilityZone']
         self.mappubliciponlaunch = subnetDict['MapPublicIpOnLaunch']
         self.subnetarn = subnetDict['SubnetArn']
+        self.subnetid = subnetDict['SubnetId']
         self.uniqueid = subnetDict['SubnetId']
 
 class AWSInstances():
@@ -232,14 +235,14 @@ class TestCloudBuddy(unittest.TestCase):
     #    isinstance(client.describe_regions(),type(list))
 
 def outputTerraform(region, targetRegion, ami):
-    acb = AWSCloudBuddy()
+    acb = AWSNimbusBuddy()
     #acb.cycleRegionInstances()
 
     AWSVPCList = acb.getProcessedVPCs(region=region)
     SubnetList = acb.getProcessedSubnets(region=region)
     InstanceList = acb.getProcessedInstances(region=region)
-        
-    tf = terraformhandler.TerraformHandler()
+    
+    tf = terraformhandler.TerraformHandler(ami)
     tf.setDataList(AWSVPCList, "vpc")
     tf.setDataList(SubnetList, "subnet")
     tf.setDataList(InstanceList, "instance")
@@ -250,43 +253,23 @@ def noop():
     print ("noop")
 
 def howtomerge(region):
-    # get vpcs first
-    acb = AWSCloudBuddy()
-    # acb.cycleRegionInstances()
-    # goes away
-    #vpcid = 'vpc-02e38283227fffc09'
-    #   vpcsubnetList.append([item for item in subnetslices if item["VpcId"] == vpcslice])
+    """ skeleton function to merge vpcs and subnets """
+    acb = AWSNimbusBuddy()
 
-    vpcslices = acb.getVPCs(regionname=region)
-    AWSVPCList = []
-    for vpcslice in vpcslices:
-        #vpcDict = acb.extractVPC(vpcslice)
-        vpcDict = acb.extractResource(vpcslice, acb.vpcKeyList, acb.vpcExpandedKeyList)
-        AWSVPCinst = AWSVPC(vpcDict)
-        AWSVPCList.append(AWSVPCinst)
-
-    subnetslices = acb.getSubnets(regionname=region)
-    #print (subnetslices)
-    SubnetList = []
-    for subnetslice in subnetslices:
-        subnetDict = acb.extractResource(subnetslice, acb.subnetKeyList, acb.subnetExpandedKeyList)
-        SubnetInst = AWSSubnet(subnetDict)
-        SubnetList.append(SubnetInst)
-
-    finallist = []
-    subnetVpcDict = {}
+    AWSVPCList = acb.getProcessedVPCs(region=region)
+    SubnetList = acb.getProcessedSubnets(region=region)
+    InstanceList = acb.getProcessedInstances(region=region)
 
     for vpc in AWSVPCList:
+        print ("VPC {} {}".format(vpc.vpcid, vpc.tags))
         for subnet in SubnetList:
             if subnet.vpcid == vpc.vpcid:
-                subnetVpcDict[subnet.vpcid] = [subnet, vpc]
-
-    # generate a list of dictionaries.
-    print (tabulate.tabulate(subnetVpcDict, headers='keys'))
-
-# EC2s join on subnets.  subnets know v pcids.(check internet gateway)
-# EC2s SecurityGroups know... instanceids???
-# i wonder if using an sql db would work better here??? 
+                print ("{} {}".format(subnet.subnetid, subnet.tags))
+            for instance in InstanceList:
+                if subnet.subnetid == instance.subnetid:
+                    print ("{} {}".format(instance.instanceid, instance.tags))
+            #else:
+            #    print ("we skipped")
 
 def display(region):
     print ("display")
