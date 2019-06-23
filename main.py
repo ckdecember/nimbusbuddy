@@ -38,7 +38,7 @@ class AWSNimbusBuddy():
         self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
         self.subnetExpandedKeyList = ['Tags']
 
-        self.instanceKeyList = ['InstanceId', 'InstanceType', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
+        self.instanceKeyList = ['InstanceId', 'InstanceType', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'VpcId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
         self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
     
     def getSecurityGroups(self):
@@ -190,15 +190,16 @@ class AWSInstances():
         #>>> cli.describe_instances()['Reservations'][0]['Instances'][0].keys()
         #['AmiLaunchIndex', 'ImageId', 'InstanceId', 'InstanceType', 'KeyName', 'LaunchTime', 'Monitoring', 'Placement', 'PrivateDnsName', 'PrivateIpAddress', 'ProductCodes', 'PublicDnsName', 'State', 'StateTransitionReason', 'SubnetId', 'VpcId', 'Architecture', 'BlockDeviceMappings', 'ClientToken', 'EbsOptimized', 'EnaSupport', 'Hypervisor', 'NetworkInterfaces', 'RootDeviceName', 'RootDeviceType', 'SecurityGroups', 'SourceDestCheck', 'StateReason', 'Tags', 'VirtualizationType', 'CpuOptions', 'CapacityReservationSpecification', 'HibernationOptions'])
 
-        # ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
+        # ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'VpcId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
 
         self.instanceid = instanceDict['InstanceId']
         self.imageid = instanceDict['ImageId']
         self.privateipaddress = instanceDict['PrivateIpAddress']
-
         
         self.publicdnsname = instanceDict['PublicDnsName']
         self.subnetid = instanceDict['SubnetId']
+
+        self.vpcid = instanceDict['VpcId']
 
         if 'InstanceType' in instanceDict:
             self.instancetype = instanceDict['InstanceType']
@@ -264,10 +265,10 @@ def howtomerge(region):
         print ("VPC {} {}".format(vpc.vpcid, vpc.tags))
         for subnet in SubnetList:
             if subnet.vpcid == vpc.vpcid:
-                print ("{} {}".format(subnet.subnetid, subnet.tags))
+                print ("Subnet {} {}".format(subnet.subnetid, subnet.tags))
             for instance in InstanceList:
-                if subnet.subnetid == instance.subnetid:
-                    print ("{} {}".format(instance.instanceid, instance.tags))
+                if (subnet.subnetid == instance.subnetid) and (instance.vpcid == vpc.vpcid):
+                    print ("Instance {} {} {}".format(instance.instanceid, instance.tags, instance.privateipaddress))
             #else:
             #    print ("we skipped")
 
