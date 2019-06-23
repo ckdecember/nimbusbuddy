@@ -106,9 +106,6 @@ class AWSNimbusBuddy():
                 if instanceInSlice['State']['Name'] == 'terminated':
                     continue
                 instanceDict = self.extractInstance(instanceInSlice, self.instanceKeyList, self.instanceExpandedKeyList)
-                #
-                #if ami:
-                #    instanceDict['ImageId'] = ami
                 InstanceInst = AWSInstances(instanceDict)
                 InstanceList.append(InstanceInst)
         return InstanceList
@@ -130,20 +127,26 @@ class AWSNimbusBuddy():
         resourceDict = {}
         for key in keyList:
             # need to add expansion for certain keys
-            if key in slice:
-                #value could be list, OR dictionary
-                if key in expandedKeyList:
-                    flattenedString = ''
-                    for sliceitem in slice[key]:
-                        # check type for list or dict.
-                        if type(sliceitem) is list:
-                            for subitem in sliceitem:
-                                flattenedString += ' '.join("{}".format(value) for (key, value) in subitem.items() if key != 'Key')
-                        elif type(sliceitem) is dict:
-                            flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key') 
-                    resourceDict[key] = flattenedString
-                else:
-                    resourceDict[key] = slice[key]
+            if key not in slice:
+                continue
+            #value could be list, OR dictionary
+            if key in expandedKeyList:
+                flattenedString = ''
+                for sliceitem in slice[key]:
+                    # check type for list or dict.
+                    if type(sliceitem) is list:
+                        for subitem in sliceitem:
+                            flattenedString += ' '.join("{}".format(value) for (key, value) in subitem.items() if key != 'Key')
+                    elif type(sliceitem) is dict:
+                        # flatten any lists into a single string
+                        #print (sliceitem)
+                        flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key') 
+                        #print (flattenedString)
+                        #print ("into the resource dict {} {}".format(key, flattenedString))
+                        resourceDict[key] = flattenedString
+                        #print (resourceDict[key])
+            else:
+                resourceDict[key] = slice[key]
         return resourceDict
     
     def displayAWS(self):
@@ -214,7 +217,7 @@ class AWSInstances():
             self.tags = instanceDict['Tags']
         else:
             self.tags = None
-        if 'SecurityGroups' in instanceDict['SecurityGroups']:
+        if 'SecurityGroups' in instanceDict:
             self.securitygroups = instanceDict['SecurityGroups']
         else:
             self.securitygroups = None
@@ -227,6 +230,7 @@ class AWSInstances():
         self.uniqueid = self.instanceid
 
 class TestCloudBuddy(unittest.TestCase):
+    """ Basic Unit Test for boto3 / ec2 instantiation"""
     def test_aws(self):
         client = boto3.client('ec2')
         isinstance(client, type(boto3.client))
@@ -236,6 +240,7 @@ class TestCloudBuddy(unittest.TestCase):
     #    isinstance(client.describe_regions(),type(list))
 
 def outputTerraform(region, targetRegion, ami):
+    """ Dumps a terraform configuration as a main.tf and variables.tf file """
     acb = AWSNimbusBuddy()
     #acb.cycleRegionInstances()
 
@@ -244,6 +249,7 @@ def outputTerraform(region, targetRegion, ami):
     InstanceList = acb.getProcessedInstances(region=region)
     
     tf = terraformhandler.TerraformHandler(ami)
+
     tf.setDataList(AWSVPCList, "vpc")
     tf.setDataList(SubnetList, "subnet")
     tf.setDataList(InstanceList, "instance")
@@ -268,11 +274,10 @@ def howtomerge(region):
                 print ("Subnet {} {}".format(subnet.subnetid, subnet.tags))
             for instance in InstanceList:
                 if (subnet.subnetid == instance.subnetid) and (instance.vpcid == vpc.vpcid):
-                    print ("Instance {} {} {}".format(instance.instanceid, instance.tags, instance.privateipaddress))
-            #else:
-            #    print ("we skipped")
+                    print ("Instance {} {} {} {}".format(instance.instanceid, instance.tags, instance.privateipaddress, instance.securitygroups))
 
 def display(region):
+    """ Display Simple Tables of VPCs, Instances, and Subnets """
     print ("display")
     acb = AWSCloudBuddy()
     # filter dictionaries with dict comprehension
@@ -300,7 +305,7 @@ def display(region):
     print (tabulate.tabulate(table, headers='keys'))
     
 def sliceDisplay(dictList, slices, regionname, killlist, allowList=[]):
-    #dictList = []
+    """ Preps a dictionary list by stripping excessive keys """
     for slice in slices:
         if not allowList:
             dict_variable = {key:value for (key,value) in slice.items() if key not in killlist }

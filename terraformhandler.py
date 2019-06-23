@@ -145,8 +145,14 @@ class TerraformHandler():
             default = "{cidr}"
         }}\n\n""".format(prefix="ami", varName=varName, tags=tags)
         return variableStr
-
     
     def setDataList(self, dataList, resourceType):
         """ Set the resource dict lists for later processing """
         self.resourceDictList[resourceType] = dataList
+    
+    def __repr__(self):
+        return (f'{self.__class__.__name__}('
+            f'{self.resourceDictList!r}, {self.amiOverride!r}')
+    
+    def __str__(self):
+        return f'{self.resourceDictList}'
