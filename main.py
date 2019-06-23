@@ -14,6 +14,18 @@ import tabulate
 
 import terraformhandler
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+
 # this will inherit aws cloud buddy OR we will use a function pointer
 class NimbusBuddy:
     def __init__(self):
@@ -197,38 +209,12 @@ class AWSVPC2():
                 else:
                     resourceDict[key] = amazonResource[key]
             self.resourceDictList.append(resourceDict)
-        
-        # debugs
-        logging.debug("entering resource Dict")
+
+        logger.debug("entering resource Dict")
         for resourceDict in self.resourceDictList:
             for (key, value) in resourceDict.items():
-                logging.debug((key, value))
+                logger.debug((key, value))
         
-        
-
-
-
-"""
-        for key in self.keyList:
-            if key in originalDict:
-                if key in self.expandedKeyList:
-                    for item in originalDict[key]:
-                        #resourceDict[]
-"""
-
-        #def extractResource(self, slice, keyList, expandedKeyList):
-        #resourceDict = {}
-        #for key in keyList:
-        #    if key in slice:
-        #        # some values are actually lists, expand those lists.
-        #        if key in expandedKeyList:
-        #            for item in slice[key]:
-        #                resourceDict[key] = item['Value']
-        #        else:
-        #            resourceDict[key] = slice[key]
-                # instances are handled differently
-        #return resourceDict
-
 class AWSSubnet():
     def __init__(self, subnetDict):
         #['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
@@ -353,52 +339,16 @@ def howtomerge(region):
 
 def display(region):
     """ Display Simple Tables of VPCs, Instances, and Subnets """
-    print ("display")
-    acb = AWSNimbusBuddy()
-    # filter dictionaries with dict comprehension
-    killlist = ['DhcpOptionsId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'Tags']
+    anb = AWSNimbusBuddy()
+    vpcsuperlist = anb.getVPCs(regionname=region)
+    print (tabulate.tabulate(vpcsuperlist, headers='keys'))
     
-    dictList = []
-    slices = acb.getVPCs(regionname=region)
-    table = sliceDisplay(dictList, slices, region, killlist)
-    #print (table)
-
-    dictList = []
-    slices = acb.getSubnets(regionname=region)
-    table = sliceDisplay(dictList, slices, region, killlist)
-    #print (table)
-
-    dictList = []
-    slices = acb.getInstances(regionname=region)
-    # iterate slices.
-    
-    table = []
-    for slice in slices:
-        allowList = ['ImageId', 'InstanceId', 'InstanceType', 'PrivateDnsName', 'PrivateIpAddress', 'PublicDnsName', 'State', 'SubnetId', 'VpcId', 'VirtualizationType', 'CpuOptions']
-        table = sliceDisplay(dictList, slice['Instances'], region, killlist, allowList)
-
-    print (tabulate.tabulate(table, headers='keys'))
-    
-def sliceDisplay(dictList, slices, regionname, killlist, allowList=[]):
-    """ Preps a dictionary list by stripping excessive keys """
-    for slice in slices:
-        if not allowList:
-            dict_variable = {key:value for (key,value) in slice.items() if key not in killlist }
-        else:
-            dict_variable = {key:value for (key,value) in slice.items() if key in allowList }
-        dictList.append(dict_variable)
-    return dictList
-    #return tabulate.tabulate(dictList, headers='keys')
-
 def testAWSVPC2(region):
     anb = AWSNimbusBuddy()
     originalDict = anb.getVPCs(region)
     vpc2 = AWSVPC2(originalDict)
 
-
 def main():
-    logging.basicConfig(filename='example.log',level=logging.DEBUG)
-
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
     parser.add_argument('command', help='Action')
 
