@@ -42,7 +42,7 @@ class AWSNimbusBuddy():
         self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
     
     def getSecurityGroups(self):
-        return self.ec2client.describe_security_groups()
+        return self.ec2client.describe_security_groups()['SecurityGroups']
         
     def getAllRegions(self):
         fullregionlist = self.ec2client.describe_regions()
@@ -124,6 +124,7 @@ class AWSNimbusBuddy():
         return resourceDict
     
     def extractInstance(self, slice, keyList, expandedKeyList):
+        """ Additional Formatting to extract Instance Data """
         resourceDict = {}
         for key in keyList:
             # need to add expansion for certain keys
@@ -217,6 +218,8 @@ class AWSInstances():
             self.tags = instanceDict['Tags']
         else:
             self.tags = None
+        
+        # maybe find a way to grab the groupid from here and set it.
         if 'SecurityGroups' in instanceDict:
             self.securitygroups = instanceDict['SecurityGroups']
         else:
@@ -228,6 +231,13 @@ class AWSInstances():
             self.ownerid = None
         self.state = instanceDict['State']
         self.uniqueid = self.instanceid
+    
+class AWSSecurityGroups():
+    """ Class for AWS Security Groups """
+    # securitygroup of Instances contains GroupId which matches GroupId in describe_security_groups()
+    # IpPermissions might just be printed out right instead of flattened?  not sure.
+    def __init__(self):
+        pass
 
 class TestCloudBuddy(unittest.TestCase):
     """ Basic Unit Test for boto3 / ec2 instantiation"""
