@@ -4,6 +4,7 @@ Core control module for nimbus buddy
 """
 
 import argparse
+import logging
 import unittest
 
 import boto3
@@ -174,11 +175,11 @@ class AWSVPC():
 
 class AWSVPC2():
     def __init__(self, amazonResourceList):
-        """ flatten some values, keep core dictionary """
+        """ Keep core dictionary but format some values as needed """
 
         self.resourceList = amazonResourceList
         self.resourceDictList = []
-        self.keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
+        #self.keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
         self.expandedKeyList = ['Tags']
         self.amazonDefaultTagName = 'Name'
 
@@ -190,18 +191,18 @@ class AWSVPC2():
                     # value is a sublist.  need to break it down again.
                     for subitem in sublist:
                         # check for missing key
-                        
-                        if subitem['Key'] == 'Name':
-                            resourceDict[key] = subitem['Value']
+                        if 'Key' in subitem:
+                            if subitem['Key'] == self.amazonDefaultTagName:
+                                resourceDict[key] = subitem['Value']
                 else:
                     resourceDict[key] = amazonResource[key]
             self.resourceDictList.append(resourceDict)
         
-        print ("#######")
-        print ("entering resource Dict")
+        # debugs
+        logging.debug("entering resource Dict")
         for resourceDict in self.resourceDictList:
             for (key, value) in resourceDict.items():
-                print (key, value)
+                logging.debug((key, value))
         
         
 
@@ -396,6 +397,8 @@ def testAWSVPC2(region):
 
 
 def main():
+    logging.basicConfig(filename='example.log',level=logging.DEBUG)
+
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
     parser.add_argument('command', help='Action')
 
