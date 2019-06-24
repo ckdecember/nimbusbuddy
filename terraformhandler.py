@@ -41,12 +41,16 @@ class TerraformHandler():
         # for INSTANCES
         tfcode = ''
         for data in self.resourceDictList['instance']:
+            # check for tags, and set with a default or different output?
+            # hack for now
+            if 'Tags' not in data:
+                data['Tags'] = ''
+
             if self.amiOverride:
                 #tfcode = self.resourceInstanceOutput(data.instanceid, data.instancetype, self.amiOverride, data.subnetid, data.tags)
                 tfcode = self.resourceInstanceOutput(data['InstanceId'], data['InstanceType'], self.amiOverride, data['SubnetId'], data['Tags'])
             else:
-                print ("right before errr")
-                print (data)
+                logger.debug(data)
                 tfcode = self.resourceInstanceOutput(data['InstanceId'], data['InstanceType'], data['ImageId'], data['SubnetId'], data['Tags'])
             fp.write(tfcode)
         fp.close()

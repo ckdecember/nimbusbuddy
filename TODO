@@ -3,33 +3,24 @@ Main Features
 - visualize 
 - save configurations
 - help restore configurations by piping into terraform 
-- save configurations locally, to be version controlled.
+- @save configurations locally, to be version controlled.
 - clean up excessive configurations
     - looks for unused security groups
     - looks for unused elastic IPs (this will be billed if not discovered)
 - quick diagnostic tool to help people troubleshoot your network
 
 Tech
-- custom data format/json format to restore configurations
 - add support for
-    - VPC
-    - Subnets
-    - EC2 instances 
-    - ELB
+    - @VPC
+    - @Subnets
+    - @EC2 instances 
+    - ELB 
     - EKS (optional)
     - security groups
     - default gateways
 
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
-
-# TODO
-
-in extractinstance, expand values
-change subnets somehow
-
-should skip default subnets and vpccs
-maybe skip terminated instances
 
 #maybe keep it mostly in dicts?  remove the class abstraction perhaps?
 
