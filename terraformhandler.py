@@ -160,6 +160,11 @@ class TerraformHandler():
         }}\n\n""".format(prefix="ami", varName=varName, tags=tags)
         return variableStr
     
+    def securityGroup():
+        """vpc_security_group_ids = ["sg-085696c3b2fafa552"]"""
+        pass
+        
+
     def setDataList(self, dataList, resourceType):
         """ Set the resource dict lists for later processing """
         self.resourceDictList[resourceType] = dataList

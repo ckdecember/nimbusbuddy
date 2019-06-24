@@ -118,7 +118,7 @@ class AWSResource():
                     logger.debug("this is instances")
                     logger.debug(instances)
                     if instances['State']['Name'] == 'terminated':
-                            skipFlag = True
+                        skipFlag = True
                     for (key, value) in instances.items():
                         # need tag flattener code here.
                         if key == 'Tags':
@@ -224,11 +224,17 @@ def display(region):
     print ("Instances")
     print (10*"#")
     displayList = []
-    allowedKeys = ['CidrBlock', 'VpcId', 'IsDefault', 'SubnetId', 'ImageId', 'InstanceId']
+    allowedKeys = ['CidrBlock', 'VpcId', 'IsDefault', 'SubnetId', 'ImageId', 'InstanceId', 'SecurityGroups', 'State']
     instancesuperlist = anb.getInstances(regionname=region)
+    # maybe run it through the main filter?
+
     for instanceList in instancesuperlist:
         for instance in instanceList['Instances']:
             trimmedDict = {key: value for (key, value) in instance.items() if key in allowedKeys}
+            trimmedDict['SecurityGroups'] = flattenDict(trimmedDict['SecurityGroups'], 'GroupId')
+            if trimmedDict['State']['Name'] == 'terminated':
+                continue
+            trimmedDict['State'] = flattenDict(trimmedDict['State'], 'Name')
             displayList.append(trimmedDict)
 
     print (tabulate.tabulate(displayList, headers='keys'))
@@ -236,27 +242,32 @@ def display(region):
 
 def display2(region):
     logger.debug("display2")
-    allowedKeys = ['InstanceId', 'Tags', 'State']
-    vpcid = 'vpc-0b615640807a87ba9'
-    subnetid = 'subnet-0f67c0622bc9073dd'
-    originalList = instanceView(region, vpcid, subnetid)
-    displayList = []
+    allowedKeys = ['InstanceId', 'Tags', 'State', 'SecurityGroups']
+    # get list of vpcid and subnetid pairs
     
-    for originalitem in originalList:
-        displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
-        if 'Tags' in displayitem:
-            displayitem['Tags'] = flattenDict(displayitem['Tags'], 'Value')
-        if 'State' in displayitem:
-            displayitem['State'] = flattenDict(displayitem['State'], 'Name')
-        displayList.append(displayitem)
-    
-    print ("VPC: {} Subnet: {} ".format(vpcid, subnetid))
-    print (tabulate.tabulate(displayList, headers='keys'))
+    vpcsubnetpairs = getVPCandSubnetPairs(region)
+    logger.debug(vpcsubnetpairs)
+    for (vpcid, subnetid) in vpcsubnetpairs:
+        # start loop?  generate values.
+        vpcid = 'vpc-0b615640807a87ba9'
+        subnetid = 'subnet-0f67c0622bc9073dd'
+
+        originalList = instanceView(region, vpcid, subnetid)
+        displayList = []
+
+        print ("VPC: {} Subnet: {} ".format(vpcid, subnetid))
+        for originalitem in originalList:
+            displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
+            if 'Tags' in displayitem:
+                displayitem['Tags'] = flattenDict(displayitem['Tags'], 'Value')
+            if 'State' in displayitem:
+                displayitem['State'] = flattenDict(displayitem['State'], 'Name')
+            displayList.append(displayitem)
+        print (tabulate.tabulate(displayList, headers='keys'))
 
 def flattenDict(flattenable, flattenKey):
     flatstring = ''
-    logger.debug(flattenable)
-
+    
     if type(flattenable) == list:
         for tag in flattenable:
             if flattenKey in tag:
@@ -266,6 +277,24 @@ def flattenDict(flattenable, flattenKey):
             flatstring = flattenable[flattenKey]
     return flatstring
 
+def getVPCandSubnetPairs(region):
+    anb = AWSNimbusBuddy()
+    vpcsubnetpair = []
+    vpcsuperlist = anb.getVPCs(regionname=region)
+    subnetsuperlist = anb.getSubnets(regionname=region)
+
+    for vpc in vpcsuperlist:
+        for subnet in subnetsuperlist:
+            if vpc['VpcId'] == subnet['VpcId']:
+                vpcsubnetpair.append((vpc['VpcId'], subnet['SubnetId']))
+    return vpcsubnetpair
+
+def instanceSecurityGroups():
+    anb = AWSNimbusBuddy()
+    securityGroupList = []
+    instancesuperlist = anb.getInstances(regionname=region)
+    
+    
 def instanceView(region, vpcid, subnetid):
     anb = AWSNimbusBuddy()
     displayList = []
@@ -300,7 +329,7 @@ def main():
         print (args.region)
         # maybe check if region is valid
         if args.region:
-            display2(region=args.region)
+            display(region=args.region)
     elif args.command == 'terraform':
         ami = None
         if args.ami:

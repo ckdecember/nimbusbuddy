@@ -14,15 +14,16 @@ Tech
     - @VPC
     - @Subnets
     - @EC2 instances 
-    - ELB 
-    - EKS (optional)
     - security groups
     - default gateways
 
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
-#maybe keep it mostly in dicts?  remove the class abstraction perhaps?
+# short list
+- maybe make a display module.  keep pulling down the groups over and over again.  
+- pull them all once in a super list.  
+
 
 
 Will also need to add extraction for securitygroups and internet gateways as well.
