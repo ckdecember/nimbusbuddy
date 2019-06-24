@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 
 class TerraformHandler():
     """ Manages Terraform Configuration Outputs"""

@@ -25,7 +25,6 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-
 # this will inherit aws cloud buddy OR we will use a function pointer
 class NimbusBuddy:
     def __init__(self):
@@ -41,17 +40,6 @@ class AWSNimbusBuddy():
         regionList = self.getAllRegions()
         self.ec2clientdict = self.initRegionList(regionList)
         
-        # this will probably be all deprecated
-        # we only pull a subset of fields from AWS
-        self.vpcKeyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
-        self.vpcExpandedKeyList = ['Tags']
-
-        self.subnetKeyList = ['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
-        self.subnetExpandedKeyList = ['Tags']
-
-        self.instanceKeyList = ['InstanceId', 'InstanceType', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'VpcId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
-        self.instanceExpandedKeyList = ['Tags', 'Placement', 'SecurityGroups']
-    
     def getAllRegions(self):
         fullregionlist = self.ec2client.describe_regions()
         regionlist = [i['RegionName'] for i in fullregionlist['Regions']]
@@ -65,24 +53,19 @@ class AWSNimbusBuddy():
 
     def viewAllRegionInstances(self):
         regionList = self.getAllRegions()
-        print ("Start")
         for region in regionList:
-            print (region)
+            logger.debug(region)
             instances = self.getInstances(region)
             for reservation in instances['Reservations']:
                 for reservedInstance in reservation['Instances']:
-                    #print (reservedInstance)
-                    #print (reservedInstance.keys())
-                    print ("#####################")
                     instancekeyList = ['InstanceId', 'Subnet', 'KeyName', 
                         'State', 'SecurityGroups', 'Placement', 'Tags']
                     for instancekey in instancekeyList:
                         if instancekey in reservedInstance:
-                            print ("{} {}".format(instancekey, reservedInstance[instancekey]))
-                    print ("#####################")
+                            logger.debug("{} {}".format(instancekey, reservedInstance[instancekey]))
 
-    def getSecurityGroups(self):
-        return self.ec2client.describe_security_groups()['SecurityGroups']
+    def getSecurityGroups(self, regionname):
+        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
         
     def getVPCs(self, regionname):
         return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']
@@ -94,40 +77,6 @@ class AWSNimbusBuddy():
         # not sure when there are multiple reservations
         return self.ec2clientdict[regionname].describe_instances()['Reservations'][0]['Instances']
     
-    def extractInstance(self, slice, keyList, expandedKeyList):
-        """ Additional Formatting to extract Instance Data """
-        resourceDict = {}
-        for key in keyList:
-            # need to add expansion for certain keys
-            if key not in slice:
-                continue
-            #value could be list, OR dictionary
-            if key in expandedKeyList:
-                flattenedString = ''
-                for sliceitem in slice[key]:
-                    # check type for list or dict.
-                    if type(sliceitem) is list:
-                        for subitem in sliceitem:
-                            flattenedString += ' '.join("{}".format(value) for (key, value) in subitem.items() if key != 'Key')
-                    elif type(sliceitem) is dict:
-                        # flatten any lists into a single string
-                        #print (sliceitem)
-                        flattenedString += ' '.join("{}".format(value) for (key, value) in sliceitem.items() if key != 'Key') 
-                        #print (flattenedString)
-                        #print ("into the resource dict {} {}".format(key, flattenedString))
-                        resourceDict[key] = flattenedString
-                        #print (resourceDict[key])
-            else:
-                resourceDict[key] = slice[key]
-        return resourceDict
-    
-    def displayAWS(self):
-        # client should be up already.
-        # or init a crazy structure?
-        print ("displayAWS")
-        vpcs = self.getVPCs()
-        print (vpcs)
-
 class AWSResource():
     def __init__(self, amazonResourceList, resourceType):
         """ Keep core dictionary but format some values as needed """
@@ -135,7 +84,6 @@ class AWSResource():
         self.resourceType = resourceType
         self.resourceList = amazonResourceList
         self.resourceDictList = []
-        #self.keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
         self.expandedKeyList = ['Tags']
         self.amazonDefaultTagName = 'Name'
 
@@ -155,15 +103,10 @@ class AWSResource():
 
         logger.debug("entering resource Dict")
         for resourceDict in self.resourceDictList:
+            logger.debug("###")
             for (key, value) in resourceDict.items():
                 logger.debug((key, value))
-
-class AWSSecurityGroups():
-    """ Class for AWS Security Groups """
-    # securitygroup of Instances contains GroupId which matches GroupId in describe_security_groups()
-    # IpPermissions might just be printed out right instead of flattened?  not sure.
-    def __init__(self):
-        pass
+            logger.debug("###")
 
 class TestNimbusBuddy(unittest.TestCase):
     """ Basic Unit Test for boto3 / ec2 instantiation"""
@@ -192,54 +135,38 @@ def outputTerraform(region, targetRegion, ami):
     anb = AWSNimbusBuddy()
     VPCList = anb.getVPCs(regionname=region)
     vpcs2 = AWSResource(VPCList, 'vpc')
-    print (vpcs2.resourceDictList)
 
-    #SubnetList = anb.getProcessedSubnets(region=region)
     SubnetList = anb.getSubnets(regionname=region)
-    #InstanceList = anb.getProcessedInstances(region=region)
     InstanceList = anb.getInstances(regionname=region)
 
     subnets2 = AWSResource(SubnetList, 'subnet')
     inst2 = AWSResource(InstanceList, 'instance')
+
+    # should refactor this?
     
     tf = terraformhandler.TerraformHandler(ami)
 
     tf.setDataList(vpcs2.resourceDictList, vpcs2.resourceType)
     tf.setDataList(subnets2.resourceDictList, subnets2.resourceType)
     tf.setDataList(inst2.resourceDictList, inst2.resourceType)
-    #tf.setDataList(InstanceList, "instance")
 
     tf.terraformDump(region, targetRegion)
-
-def howtomerge(region):
-    """ skeleton function to merge vpcs and subnets """
-    acb = AWSNimbusBuddy()
-    """
-    AWSVPCList = acb.getProcessedVPCs(region=region)
-    SubnetList = acb.getProcessedSubnets(region=region)
-    InstanceList = acb.getProcessedInstances(region=region)
-
-    for vpc in AWSVPCList:
-        print ("VPC {} {}".format(vpc.vpcid, vpc.tags))
-        for subnet in SubnetList:
-            if subnet.vpcid == vpc.vpcid:
-                print ("Subnet {} {}".format(subnet.subnetid, subnet.tags))
-            for instance in InstanceList:
-                if (subnet.subnetid == instance.subnetid) and (instance.vpcid == vpc.vpcid):
-                    print ("Instance {} {} {} {}".format(instance.instanceid, instance.tags, instance.privateipaddress, instance.securitygroups))
-    """
-
 
 def display(region):
     """ Display Simple Tables of VPCs, Instances, and Subnets """
     anb = AWSNimbusBuddy()
     vpcsuperlist = anb.getVPCs(regionname=region)
+
+    
+
+
     print (tabulate.tabulate(vpcsuperlist, headers='keys'))
     
-def testAWSVPC2(region):
+def testSecurityGroup(region):
     anb = AWSNimbusBuddy()
-    originalDict = anb.getVPCs(region)
-    vpc2 = AWSResource(originalDict)
+    sglist = anb.getSecurityGroups(regionname=region)
+    SG = AWSResource(sglist, 'securitygroup')
+
 
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
@@ -250,7 +177,7 @@ def main():
     parser.add_argument('--ami')
 
     args = parser.parse_args()
-    
+
     #make region a requirement for some?
 
     if args.command == 'display':
@@ -275,11 +202,11 @@ def main():
     elif args.command == 'merge':
         howtomerge(args.region)
     elif args.command == 'test':
-        testAWSResource(args.region)
+        testSecurityGroup(args.region)
     else:
         noop()
 
 if  __name__ =='__main__': main()
 
-__version__ = '0.2'
+__version__ = '0.3'
 __author__ = 'Carroll Kong'
