@@ -206,6 +206,9 @@ def display(region):
     """ Display Simple Tables of VPCs, Instances, and Subnets """
     anb = AWSNimbusBuddy()
     vpcsuperlist = anb.getVPCs(regionname=region)
+    logger.debug(vpcsuperlist)
+    # list of dicts.  iterate throgh list, trim dicts, 
+    # ok trimthe list??? 
 
     print (tabulate.tabulate(vpcsuperlist, headers='keys'))
     
