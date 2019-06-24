@@ -170,25 +170,11 @@ class AWSNimbusBuddy():
         vpcs = self.getVPCs()
         print (vpcs)
 
-class AWSVPC():
-    def __init__(self, vpcDict):
-        #['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId']
-        #['Tags']
-        self.vpcid = vpcDict['VpcId']
-        self.cidrblock = vpcDict['CidrBlock']
-        self.state = vpcDict['State']
-        if 'Tags' in vpcDict:
-            self.tags = vpcDict['Tags']
-        else:
-            self.tags = None
-        self.ownerid = vpcDict['OwnerId']
-        self.uniqueid = vpcDict['VpcId']
-        self.isDefault = vpcDict['IsDefault']
-
-class AWSVPC2():
-    def __init__(self, amazonResourceList):
+class AWSResource():
+    def __init__(self, amazonResourceList, resourceType):
         """ Keep core dictionary but format some values as needed """
 
+        self.resourceType = resourceType
         self.resourceList = amazonResourceList
         self.resourceDictList = []
         #self.keyList = ['CidrBlock', 'State', 'Tags', 'OwnerId', 'VpcId', 'IsDefault']
@@ -202,7 +188,6 @@ class AWSVPC2():
                     # ok these are dicts, or possibly lists of dicts.
                     # value is a sublist.  need to break it down again.
                     for subitem in sublist:
-                        # check for missing key
                         if 'Key' in subitem:
                             if subitem['Key'] == self.amazonDefaultTagName:
                                 resourceDict[key] = subitem['Value']
@@ -214,23 +199,6 @@ class AWSVPC2():
         for resourceDict in self.resourceDictList:
             for (key, value) in resourceDict.items():
                 logger.debug((key, value))
-        
-class AWSSubnet():
-    def __init__(self, subnetDict):
-        #['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn']
-        self.vpcid = subnetDict['VpcId']
-        self.cidrblock = subnetDict['CidrBlock']
-        self.state = subnetDict['State']
-        if 'Tags' in subnetDict:
-            self.tags = subnetDict['Tags']
-        else:
-            self.tags = None
-        self.ownerid = subnetDict['OwnerId']
-        self.availabilityzone = subnetDict['AvailabilityZone']
-        self.mappubliciponlaunch = subnetDict['MapPublicIpOnLaunch']
-        self.subnetarn = subnetDict['SubnetArn']
-        self.subnetid = subnetDict['SubnetId']
-        self.uniqueid = subnetDict['SubnetId']
 
 class AWSInstances():
     def __init__(self, instanceDict):
@@ -317,6 +285,27 @@ def outputTerraform(region, targetRegion, ami):
 
     tf.terraformDump(region, targetRegion)
 
+def outputTerraform2(region, targetRegion, ami):
+    """ Dumps a terraform configuration as a main.tf and variables.tf file """
+    anb = AWSNimbusBuddy()
+    VPCList = anb.getVPCs(regionname=region)
+    vpcs2 = AWSResource(VPCList, 'vpc')
+    print (vpcs2.resourceDictList)
+
+    #SubnetList = anb.getProcessedSubnets(region=region)
+    SubnetList = anb.getSubnets(regionname=region)
+    InstanceList = anb.getProcessedInstances(region=region)
+
+    subnets2 = AWSResource(SubnetList, 'subnet')
+    
+    tf = terraformhandler.TerraformHandler(ami)
+
+    tf.setDataList(vpcs2.resourceDictList, vpcs2.resourceType)
+    tf.setDataList(subnets2.resourceDictList, subnets2.resourceType)
+    tf.setDataList(InstanceList, "instance")
+
+    tf.terraformDump(region, targetRegion)
+
 def noop():
     print ("noop")
 
@@ -346,7 +335,7 @@ def display(region):
 def testAWSVPC2(region):
     anb = AWSNimbusBuddy()
     originalDict = anb.getVPCs(region)
-    vpc2 = AWSVPC2(originalDict)
+    vpc2 = AWSResource(originalDict)
 
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
@@ -373,16 +362,16 @@ def main():
             ami = args.ami
 
         if args.region and args.targetregion:
-            outputTerraform(args.region, args.targetregion, ami)
+            outputTerraform2(args.region, args.targetregion, ami)
         elif args.region:
             print ('no target region set, defaulting to region = targetregion')
-            outputTerraform(args.region, args.region, ami)
+            outputTerraform2(args.region, args.region, ami)
         else:
             print ('need args')
     elif args.command == 'merge':
         howtomerge(args.region)
     elif args.command == 'test':
-        testAWSVPC2(args.region)
+        testAWSResource(args.region)
     else:
         noop()
 

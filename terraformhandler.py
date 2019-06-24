@@ -22,18 +22,20 @@ class TerraformHandler():
         vpcForDefaultSubnet = ''
         tfcode = ''
         for data in self.resourceDictList['vpc']:
-            if data.isDefault:
-                vpcForDefaultSubnet = data.vpcid
+            print ("right before error")
+            print (data)
+            if data['IsDefault']:
+                vpcForDefaultSubnet = data['VpcId']
             else:
-                tfcode += self.resourceOutput('vpc', data.vpcid, data.uniqueid, data.tags, data.vpcid)
+                tfcode += self.resourceOutput('vpc', data['VpcId'], data['VpcId'], data['Tags'], data['VpcId'])
         fp.write(tfcode)
 
         # for SUBNETS
         tfcode = ''
         for data in self.resourceDictList['subnet']:
-            if data.vpcid == vpcForDefaultSubnet:
+            if data['VpcId'] == vpcForDefaultSubnet:
                 continue
-            tfcode += self.resourceOutput('subnet', data.vpcid, data.uniqueid, data.tags, data.vpcid)
+            tfcode += self.resourceOutput('subnet', data['VpcId'], data['SubnetId'], data['Tags'], data['VpcId'])
         fp.write(tfcode)
         
         # for INSTANCES
@@ -56,10 +58,13 @@ class TerraformHandler():
         #unclear if instances need variables 
 
         for resourceType in resourceTypeList:
-            for data in self.resourceDictList[resourceType]:
-                tfcode = self.variableOutput(resourceType, data.uniqueid, data.cidrblock, data.tags)
+            for data in self.resourceDictList['vpc']:
+                tagValue = ''
+                if 'Tags' in data:
+                    tagValue = data['Tags']
+                tfcode = self.variableOutput(resourceType, data['VpcId'], data['CidrBlock'], tagValue)
                 fp.write(tfcode)
-
+    
         #for data in self.resourceDictList['instance']:
             # for ami
         #    tfcode = self.variableOutput('instance', data.uniqueid, data.imageid, data.tags)
