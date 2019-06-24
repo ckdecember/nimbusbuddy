@@ -33,6 +33,7 @@ class NimbusBuddy:
 class AWSNimbusBuddy():
     """ Hey I'm a NimbusBuddy """
     def __init__(self):
+        """ Initializes a base client for querying AWS and clients for every region """
         # base client for basic get operations
         self.ec2client = boto3.client('ec2')
 
@@ -41,11 +42,13 @@ class AWSNimbusBuddy():
         self.ec2clientdict = self.initRegionList(regionList)
         
     def getAllRegions(self):
+        """ List of all the regions in AWS """
         fullregionlist = self.ec2client.describe_regions()
         regionlist = [i['RegionName'] for i in fullregionlist['Regions']]
         return regionlist
 
     def initRegionList(self, regionList):
+        """ initializes the clients for every region """
         clientDict = {}
         for region in regionList:
             clientDict[region] = boto3.client('ec2', region_name=region)
@@ -92,13 +95,6 @@ class AWSResource():
                 resourceDict = {}
                 skipFlag = False
                 for (key, sublist) in amazonResource.items():
-                    """
-                    flattenedString = self.flattener(key, self.expandedKeyList, self.amazonDefaultTagName, sublist)
-                    if flattenedString:
-                        resourceDict[key] = flattenedString
-                    else:
-                        resourceDict[key] = amazonResource[key]
-                    """
                     if key in self.expandedKeyList:
                         # ok these are dicts, or possibly lists of dicts.
                         # value is a sublist.  need to break it down again.
@@ -115,7 +111,7 @@ class AWSResource():
         elif self.resourceType == 'instance':
             for amazonResource in self.resourceList:
                 # Resource->ReservationList->InstanceList->InstanceData.
-                # go one level loop deeper
+                # amazon stores instances in a deeper level than subnets/vpcs
                 resourceDict = {}
                 skipFlag = False
                 for instances in amazonResource['Instances']:
@@ -124,8 +120,7 @@ class AWSResource():
                     if instances['State']['Name'] == 'terminated':
                             skipFlag = True
                     for (key, value) in instances.items():
-                        # copy it over
-                        # need tag flattener cod here.
+                        # need tag flattener code here.
                         if key == 'Tags':
                             flattenedString = ''
                             # [{'Key': 'Name', 'Value': 'Newinstance'}]
@@ -144,19 +139,6 @@ class AWSResource():
             for (key, value) in resourceDict.items():
                 logger.debug("{} {}".format(key, value))
             logger.debug("###")
-
-    def flattener(self, key, expandedKeyList, defaultTag, dataList):
-        flattenedString = None
-        if key in expandedKeyList:
-            # ok these are dicts, or possibly lists of dicts.
-            # value is a sublist.  need to break it down again.
-            # how to handle for instance tags?
-            for dataItem in dataList:
-                logger.debug(dataItem)
-                if 'Key' in dataItem:
-                    if dataItem['Key'] == defaultTag:
-                        flattenedString = dataItem['Value']
-        return flattenedString
 
 class TestNimbusBuddy(unittest.TestCase):
     """ Basic Unit Test for boto3 / ec2 instantiation"""
@@ -192,8 +174,6 @@ def outputTerraform(region, targetRegion, ami):
     subnets2 = AWSResource(SubnetList, 'subnet')
     inst2 = AWSResource(InstanceList, 'instance')
 
-    # should refactor this?
-    
     tf = terraformhandler.TerraformHandler(ami)
 
     tf.setDataList(vpcs2.resourceDictList, vpcs2.resourceType)
@@ -205,26 +185,70 @@ def outputTerraform(region, targetRegion, ami):
 def display(region):
     """ Display Simple Tables of VPCs, Instances, and Subnets """
     anb = AWSNimbusBuddy()
-    vpcsuperlist = anb.getVPCs(regionname=region)
-    logger.debug(vpcsuperlist)
-    # list of dicts.  iterate throgh list, trim dicts, 
-    # ok trimthe list??? 
 
-    print (tabulate.tabulate(vpcsuperlist, headers='keys'))
+    print ("Region: {}".format(region))
     
+    # could make a super list of dicts, with unified dicts.
+
+    # three sections, maybe turn it into a function later
+    # 
+    tmpDict = {}
+    
+    displayList = []
+    allowedKeys = ['CidrBlock', 'VpcId', 'IsDefault']
+    print (10*"#")
+    print ("VPCs")
+    print (10*"#")
+    vpcsuperlist = anb.getVPCs(regionname=region)
+    for vpc in vpcsuperlist:
+        trimmedDict = {key: value for (key, value) in vpc.items() if key in allowedKeys}
+        displayList.append(trimmedDict)
+
+    print (tabulate.tabulate(displayList, headers='keys'))
+    print (2*"\n")
+
+    print (10*"#")
+    print ("Subnets")
+    print (10*"#")
+    displayList = []
+    allowedKeys = ['CidrBlock', 'VpcId', 'IsDefault', 'SubnetId']
+    subnetsuperlist = anb.getSubnets(regionname=region)
+    for subnet in subnetsuperlist:
+        trimmedDict = {key: value for (key, value) in subnet.items() if key in allowedKeys}
+        displayList.append(trimmedDict)
+
+    print (tabulate.tabulate(displayList, headers='keys'))
+    print (2*"\n")
+
+    print (10*"#")
+    print ("Instances")
+    print (10*"#")
+    displayList = []
+    allowedKeys = ['CidrBlock', 'VpcId', 'IsDefault', 'SubnetId', 'ImageId', 'InstanceId']
+    instancesuperlist = anb.getInstances(regionname=region)
+    for instanceList in instancesuperlist:
+        for instance in instanceList['Instances']:
+            trimmedDict = {key: value for (key, value) in instance.items() if key in allowedKeys}
+            displayList.append(trimmedDict)
+
+    print (tabulate.tabulate(displayList, headers='keys'))
+    print (2*"\n")
+        
 def testSecurityGroup(region):
     anb = AWSNimbusBuddy()
     sglist = anb.getSecurityGroups(regionname=region)
     SG = AWSResource(sglist, 'securitygroup')
 
+def noop():
+    print("Nothing to be done")
 
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
-    parser.add_argument('command', help='Action')
+    parser.add_argument('command', help='valid commands: display, terraform')
 
-    parser.add_argument('--region')
-    parser.add_argument('--targetregion')
-    parser.add_argument('--ami')
+    parser.add_argument('region', help="Current working AWS Region e.g.  us-west-1")
+    parser.add_argument('--targetregion', help="Destination AWS Region for migration")
+    parser.add_argument('--ami', help="Override AMI codes for region to region migration in terraform")
 
     args = parser.parse_args()
 
@@ -253,8 +277,6 @@ def main():
         howtomerge(args.region)
     elif args.command == 'test':
         testSecurityGroup(args.region)
-    else:
-        noop()
 
 if  __name__ =='__main__': main()
 
