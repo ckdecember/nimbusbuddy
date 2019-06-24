@@ -233,7 +233,40 @@ def display(region):
 
     print (tabulate.tabulate(displayList, headers='keys'))
     print (2*"\n")
-        
+
+def display2(region):
+    logger.debug("display2")
+    allowedKeys = ['InstanceId', 'Tags']
+    vpcid = 'vpc-0b615640807a87ba9'
+    subnetid = 'subnet-0f67c0622bc9073dd'
+    originalList = instanceView(region, vpcid, subnetid)
+    displayList = []
+    
+    for originalitem in originalList:
+        displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
+        if 'Tags' in displayitem:
+            displayitem['Tags'] = flattenDict(displayitem['Tags'])
+        displayList.append(displayitem)
+    
+    print (tabulate.tabulate(displayList, headers='keys'))
+
+def flattenDict(tagList):
+    flatstring = ''
+    for tag in tagList:
+        if ('Key' in tag) and (tag['Key'] == 'Name'):
+            flatstring = tag['Value']
+    return flatstring
+
+def instanceView(region, vpcid, subnetid):
+    anb = AWSNimbusBuddy()
+    displayList = []
+    instancesuperlist = anb.getInstances(regionname=region)
+    for instanceList in instancesuperlist:
+        for instance in instanceList['Instances']:
+            if (instance['VpcId'] == vpcid) and (instance['SubnetId'] == subnetid):
+                displayList.append(instance)
+    return displayList        
+
 def testSecurityGroup(region):
     anb = AWSNimbusBuddy()
     sglist = anb.getSecurityGroups(regionname=region)
@@ -258,9 +291,7 @@ def main():
         print (args.region)
         # maybe check if region is valid
         if args.region:
-            display(region=args.region)
-        else:
-            display()
+            display2(region=args.region)
     elif args.command == 'terraform':
         ami = None
         if args.ami:
