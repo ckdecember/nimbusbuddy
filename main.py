@@ -236,7 +236,7 @@ def display(region):
 
 def display2(region):
     logger.debug("display2")
-    allowedKeys = ['InstanceId', 'Tags']
+    allowedKeys = ['InstanceId', 'Tags', 'State']
     vpcid = 'vpc-0b615640807a87ba9'
     subnetid = 'subnet-0f67c0622bc9073dd'
     originalList = instanceView(region, vpcid, subnetid)
@@ -245,16 +245,25 @@ def display2(region):
     for originalitem in originalList:
         displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
         if 'Tags' in displayitem:
-            displayitem['Tags'] = flattenDict(displayitem['Tags'])
+            displayitem['Tags'] = flattenDict(displayitem['Tags'], 'Value')
+        if 'State' in displayitem:
+            displayitem['State'] = flattenDict(displayitem['State'], 'Name')
         displayList.append(displayitem)
     
+    print ("VPC: {} Subnet: {} ".format(vpcid, subnetid))
     print (tabulate.tabulate(displayList, headers='keys'))
 
-def flattenDict(tagList):
+def flattenDict(flattenable, flattenKey):
     flatstring = ''
-    for tag in tagList:
-        if ('Key' in tag) and (tag['Key'] == 'Name'):
-            flatstring = tag['Value']
+    logger.debug(flattenable)
+
+    if type(flattenable) == list:
+        for tag in flattenable:
+            if flattenKey in tag:
+                flatstring = tag[flattenKey]
+    elif type(flattenable) == dict:
+        if flattenKey in flattenable:
+            flatstring = flattenable[flattenKey]
     return flatstring
 
 def instanceView(region, vpcid, subnetid):
