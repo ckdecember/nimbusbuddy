@@ -91,50 +91,8 @@ class AWSNimbusBuddy():
         return self.ec2clientdict[regionname].describe_subnets()['Subnets']
 
     def getInstances(self, regionname):
-        return self.ec2clientdict[regionname].describe_instances()['Reservations']
-    
-    def getProcessedVPCs(self, region):
-        vpcslices = self.getVPCs(regionname=region)
-        AWSVPCList = []
-        for vpcslice in vpcslices:
-            vpcDict = self.extractResource(vpcslice, self.vpcKeyList, self.vpcExpandedKeyList)
-            AWSVPCinst = AWSVPC(vpcDict)
-            AWSVPCList.append(AWSVPCinst)
-        return AWSVPCList
-
-    def getProcessedSubnets(self, region):    
-        subnetslices = self.getSubnets(regionname=region)
-        SubnetList = []
-        for subnetslice in subnetslices:
-            subnetDict = self.extractResource(subnetslice, self.subnetKeyList, self.subnetExpandedKeyList)
-            SubnetInst = AWSSubnet(subnetDict)
-            SubnetList.append(SubnetInst)
-        return SubnetList
-    
-    def getProcessedInstances(self, region):
-        instanceslices = self.getInstances(regionname=region)
-        InstanceList = []
-        for instanceslice in instanceslices:
-            for instanceInSlice in instanceslice['Instances']:
-                if instanceInSlice['State']['Name'] == 'terminated':
-                    continue
-                instanceDict = self.extractInstance(instanceInSlice, self.instanceKeyList, self.instanceExpandedKeyList)
-                InstanceInst = AWSInstances(instanceDict)
-                InstanceList.append(InstanceInst)
-        return InstanceList
-
-    def extractResource(self, slice, keyList, expandedKeyList):
-        resourceDict = {}
-        for key in keyList:
-            if key in slice:
-                # some values are actually lists, expand those lists.
-                if key in expandedKeyList:
-                    for item in slice[key]:
-                        resourceDict[key] = item['Value']
-                else:
-                    resourceDict[key] = slice[key]
-                # instances are handled differently
-        return resourceDict
+        # not sure when there are multiple reservations
+        return self.ec2clientdict[regionname].describe_instances()['Reservations'][0]['Instances']
     
     def extractInstance(self, slice, keyList, expandedKeyList):
         """ Additional Formatting to extract Instance Data """
@@ -200,49 +158,6 @@ class AWSResource():
             for (key, value) in resourceDict.items():
                 logger.debug((key, value))
 
-class AWSInstances():
-    def __init__(self, instanceDict):
-        #>>> cli.describe_instances()['Reservations'][0]['Instances'][0].keys()
-        #['AmiLaunchIndex', 'ImageId', 'InstanceId', 'InstanceType', 'KeyName', 'LaunchTime', 'Monitoring', 'Placement', 'PrivateDnsName', 'PrivateIpAddress', 'ProductCodes', 'PublicDnsName', 'State', 'StateTransitionReason', 'SubnetId', 'VpcId', 'Architecture', 'BlockDeviceMappings', 'ClientToken', 'EbsOptimized', 'EnaSupport', 'Hypervisor', 'NetworkInterfaces', 'RootDeviceName', 'RootDeviceType', 'SecurityGroups', 'SourceDestCheck', 'StateReason', 'Tags', 'VirtualizationType', 'CpuOptions', 'CapacityReservationSpecification', 'HibernationOptions'])
-
-        # ['InstanceId', 'ImageId', 'PrivateIpAddress', 'PublicDnsName', 'SubnetId', 'VpcId', 'Placement', 'Tags', 'SecurityGroups', 'OwnerId', 'State']
-
-        self.instanceid = instanceDict['InstanceId']
-        self.imageid = instanceDict['ImageId']
-        self.privateipaddress = instanceDict['PrivateIpAddress']
-        
-        self.publicdnsname = instanceDict['PublicDnsName']
-        self.subnetid = instanceDict['SubnetId']
-
-        self.vpcid = instanceDict['VpcId']
-
-        if 'InstanceType' in instanceDict:
-            self.instancetype = instanceDict['InstanceType']
-        else:
-            self.instancetype = None
-
-        if 'Placement' in instanceDict:
-            self.placement = instanceDict['Placement']
-        else:
-            self.placement = None
-        if 'Tags' in instanceDict:
-            self.tags = instanceDict['Tags']
-        else:
-            self.tags = None
-        
-        # maybe find a way to grab the groupid from here and set it.
-        if 'SecurityGroups' in instanceDict:
-            self.securitygroups = instanceDict['SecurityGroups']
-        else:
-            self.securitygroups = None
-
-        if 'OwnerId' in instanceDict:
-            self.ownerid = instanceDict['OwnerId']
-        else:
-            self.ownerid = None
-        self.state = instanceDict['State']
-        self.uniqueid = self.instanceid
-    
 class AWSSecurityGroups():
     """ Class for AWS Security Groups """
     # securitygroup of Instances contains GroupId which matches GroupId in describe_security_groups()
@@ -267,25 +182,12 @@ class TestNimbusBuddy(unittest.TestCase):
     #    region = session.region_name
     #    self.assertEquals(region, regionTest)
 
-
+# prob should test each function
+# display
+# merge
+# terraform
 
 def outputTerraform(region, targetRegion, ami):
-    """ Dumps a terraform configuration as a main.tf and variables.tf file """
-    acb = AWSNimbusBuddy()
-
-    AWSVPCList = acb.getProcessedVPCs(region=region)
-    SubnetList = acb.getProcessedSubnets(region=region)
-    InstanceList = acb.getProcessedInstances(region=region)
-    
-    tf = terraformhandler.TerraformHandler(ami)
-
-    tf.setDataList(AWSVPCList, "vpc")
-    tf.setDataList(SubnetList, "subnet")
-    tf.setDataList(InstanceList, "instance")
-
-    tf.terraformDump(region, targetRegion)
-
-def outputTerraform2(region, targetRegion, ami):
     """ Dumps a terraform configuration as a main.tf and variables.tf file """
     anb = AWSNimbusBuddy()
     VPCList = anb.getVPCs(regionname=region)
@@ -294,25 +196,25 @@ def outputTerraform2(region, targetRegion, ami):
 
     #SubnetList = anb.getProcessedSubnets(region=region)
     SubnetList = anb.getSubnets(regionname=region)
-    InstanceList = anb.getProcessedInstances(region=region)
+    #InstanceList = anb.getProcessedInstances(region=region)
+    InstanceList = anb.getInstances(regionname=region)
 
     subnets2 = AWSResource(SubnetList, 'subnet')
+    inst2 = AWSResource(InstanceList, 'instance')
     
     tf = terraformhandler.TerraformHandler(ami)
 
     tf.setDataList(vpcs2.resourceDictList, vpcs2.resourceType)
     tf.setDataList(subnets2.resourceDictList, subnets2.resourceType)
-    tf.setDataList(InstanceList, "instance")
+    tf.setDataList(inst2.resourceDictList, inst2.resourceType)
+    #tf.setDataList(InstanceList, "instance")
 
     tf.terraformDump(region, targetRegion)
-
-def noop():
-    print ("noop")
 
 def howtomerge(region):
     """ skeleton function to merge vpcs and subnets """
     acb = AWSNimbusBuddy()
-
+    """
     AWSVPCList = acb.getProcessedVPCs(region=region)
     SubnetList = acb.getProcessedSubnets(region=region)
     InstanceList = acb.getProcessedInstances(region=region)
@@ -325,6 +227,8 @@ def howtomerge(region):
             for instance in InstanceList:
                 if (subnet.subnetid == instance.subnetid) and (instance.vpcid == vpc.vpcid):
                     print ("Instance {} {} {} {}".format(instance.instanceid, instance.tags, instance.privateipaddress, instance.securitygroups))
+    """
+
 
 def display(region):
     """ Display Simple Tables of VPCs, Instances, and Subnets """
@@ -362,10 +266,10 @@ def main():
             ami = args.ami
 
         if args.region and args.targetregion:
-            outputTerraform2(args.region, args.targetregion, ami)
+            outputTerraform(args.region, args.targetregion, ami)
         elif args.region:
             print ('no target region set, defaulting to region = targetregion')
-            outputTerraform2(args.region, args.region, ami)
+            outputTerraform(args.region, args.region, ami)
         else:
             print ('need args')
     elif args.command == 'merge':
