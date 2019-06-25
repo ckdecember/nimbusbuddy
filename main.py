@@ -188,7 +188,6 @@ def display(region):
     print ("Region: {}".format(region))
     
     # could make a super list of dicts, with unified dicts.
-
     # three sections, maybe turn it into a function later
     # 
     tmpDict = {}
@@ -242,15 +241,12 @@ def display(region):
 def display2(region):
     logger.debug("display2")
     allowedKeys = ['InstanceId', 'Tags', 'State', 'SecurityGroups']
+
     # get list of vpcid and subnetid pairs
-    
     vpcsubnetpairs = getVPCandSubnetPairs(region)
     logger.debug(vpcsubnetpairs)
-    for (vpcid, subnetid) in vpcsubnetpairs:
-        # start loop?  generate values.
-        vpcid = 'vpc-0b615640807a87ba9'
-        subnetid = 'subnet-0f67c0622bc9073dd'
 
+    for (vpcid, subnetid) in vpcsubnetpairs:
         originalList = instanceView(region, vpcid, subnetid)
         displayList = []
 
@@ -304,32 +300,54 @@ def instanceView(region, vpcid, subnetid):
     return displayList
 
 def stripDictList(dictList, listOfAllowedFields):
-    logger.debug("inside strip dict")
+    #logger.debug("inside strip dict")
     tmpList = []
     for listItem in dictList:
         #logger.debug("list item")
         #logger.debug(listItem)
         tmpDict = {key: value for (key, value) in listItem.items() if key in listOfAllowedFields}
-        logger.debug(tmpDict)
+        #logger.debug(tmpDict)
         if tmpDict:
             tmpList.append(tmpDict)
-    logger.debug(tmpList)
+    #logger.debug(tmpList)
     return tmpList
 
 def testSecurityGroup(region):
     anb = AWSNimbusBuddy()
     sglist = anb.getSecurityGroups(regionname=region)
     SG = AWSResource(sglist, 'securitygroup')
-    logger.debug(SG.resourceDictList)
-
+    # just expand the ipprotocol
+    # ipprotocol -1 is ALL.
+    # ip ranges is [], is that all?
     # if ippermissions is empty, it means no rules.  
     # could be hard to flatten
 
+    # if a list for type of output is around
+    ['IpProtocol', 'IpRanges']
+    ['FromPort', 'IpProtocol', 'IpRanges', 'ToPort']
+    # fromport is start range of ports.  toport is end range of ports
+    # 'IpRanges': [{'CidrIp': '104.247.55.102/32', 'Description': ''}, {'CidrIp': '69.115.177.236/32', 'Description': ''}]
+    # IpRanges is a list of CidrIp/Description dicts.  
+
     ipPermissionsList = stripDictList(SG.resourceDictList, ['IpPermissions'])
+    for ipPermission in ipPermissionsList:
+        rulesList = ipPermission['IpPermissions']
+        logger.debug("Start of Rules")
+        for rules in rulesList:
+            if "FromPort" in rules.keys():
+                print ("hi")
+            # interpret the dict keys
+            if "FromPort" in rules:
+                print ("\tPort: {FromPort} IpProtocol: {IpProtocol}".format(**rules))
+            logger.debug(rules)
+        logger.debug("end of rules")
+
+    # pop one out of the list
+
     #ipPermissionsList = stripDictList(ipPermissionsList, ['IpProtocol', 'IpRanges'])
     #logger.debug(ipPermissionsList)
 
-    print (tabulate.tabulate(ipPermissionsList, headers="keys"))
+    #print (tabulate.tabulate(ipPermissionsList, headers="keys"))
         
 
 def noop():
@@ -351,12 +369,11 @@ def main():
         print (args.region)
         # maybe check if region is valid
         if args.region:
-            display(region=args.region)
+            display2(region=args.region)
     elif args.command == 'terraform':
         ami = None
         if args.ami:
             ami = args.ami
-
         if args.region and args.targetregion:
             outputTerraform(args.region, args.targetregion, ami)
         elif args.region:
