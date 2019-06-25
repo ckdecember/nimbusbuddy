@@ -246,19 +246,30 @@ def display2(region):
     vpcsubnetpairs = getVPCandSubnetPairs(region)
     logger.debug(vpcsubnetpairs)
 
-    for (vpcid, subnetid) in vpcsubnetpairs:
+    for (vpcid, vpccidr, subnetid, subnetcidr) in vpcsubnetpairs:
         originalList = instanceView(region, vpcid, subnetid)
         displayList = []
 
-        print ("VPC: {} Subnet: {} ".format(vpcid, subnetid))
+        # this dict helps flatten dictionaries that are values to keys.  
+        # Key: Flatten Key
+        
+        flattenDict = {'Tags': 'Value', 'State': 'Name', 'SecurityGroups': 'GroupId'}
+
+        print ("VPC: {} {} Subnet: {} {} ".format(vpcid, vpccidr, subnetid, subnetcidr))
         for originalitem in originalList:
             displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
-            if 'Tags' in displayitem:
-                displayitem['Tags'] = flattenDict(displayitem['Tags'], 'Value')
-            if 'State' in displayitem:
-                displayitem['State'] = flattenDict(displayitem['State'], 'Name')
+            for (fdkey, fdvalue) in flattenDict.items():
+                if fdkey in displayitem:
+                    displayitem[fdkey] = flattenItem(displayitem, fdkey, fdvalue)
             displayList.append(displayitem)
-        print (tabulate.tabulate(displayList, headers='keys'))
+        finalDisplay = tabulate.tabulate(displayList, headers='keys')
+        if finalDisplay:
+            print (finalDisplay)
+        else:
+            print ("No Instances Found")
+
+def flattenItem(displayitem, key, flattenkey):
+    return flattenDict(displayitem[key], flattenkey)
 
 def flattenDict(flattenable, flattenKey):
     flatstring = ''
@@ -273,6 +284,7 @@ def flattenDict(flattenable, flattenKey):
     return flatstring
 
 def getVPCandSubnetPairs(region):
+    """ retrieve matching VPC and Subnet Pairs"""
     anb = AWSNimbusBuddy()
     vpcsubnetpair = []
     vpcsuperlist = anb.getVPCs(regionname=region)
@@ -281,7 +293,9 @@ def getVPCandSubnetPairs(region):
     for vpc in vpcsuperlist:
         for subnet in subnetsuperlist:
             if vpc['VpcId'] == subnet['VpcId']:
-                vpcsubnetpair.append((vpc['VpcId'], subnet['SubnetId']))
+                # perhaps can add more meta data, or just use the ids here to retrieve data ?
+                #logger.debug(vpc)
+                vpcsubnetpair.append((vpc['VpcId'], vpc['CidrBlock'], subnet['SubnetId'], subnet['CidrBlock']))
     return vpcsubnetpair
 
 def instanceSecurityGroups():
