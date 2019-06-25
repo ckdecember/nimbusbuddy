@@ -41,7 +41,7 @@ def main():
     if args.command == 'display':
         print (args.region)
         if args.region:
-            nd.VPCandSubnets(region=args.region)
+            nd.VPCandSubnets()
     elif args.command == 'terraform':
         ami = None
         if args.ami:
@@ -56,9 +56,9 @@ def main():
         else:
             print ('need args')
     elif args.command == 'merge':
-        nimbusdisplay.noop2()
+        nd.testSecurityGroup()
     elif args.command == 'test':
-        testSecurityGroup(args.region)
+        nd.display()
 
 if  __name__ =='__main__': main()
 

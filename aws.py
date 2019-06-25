@@ -6,6 +6,16 @@ import botocore
 
 logger = logging.getLogger(__name__)
 
+#logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 class AWSNimbusBuddy():
     """ Hey I'm a NimbusBuddy """
     def __init__(self, region):
@@ -59,7 +69,7 @@ class AWSNimbusBuddy():
                     vpcsubnetpair.append((vpc['VpcId'], vpc['CidrBlock'], subnet['SubnetId'], subnet['CidrBlock']))
         return vpcsubnetpair
 
-    def displayInstanceView(self, region, vpcid, subnetid):
+    def displayInstanceView(self, vpcid, subnetid):
         displayList = []
         instancesuperlist = self.getInstances()
         for instanceList in instancesuperlist:
