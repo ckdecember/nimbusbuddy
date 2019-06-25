@@ -27,3 +27,21 @@ I plan to extend the code so it will work with other cloud technologies, so I'd 
 - boto3
 - tabulate
 
+# Installation
+sudo apt install awscli
+aws configure
+sudo apt install python3-pip
+
+echo "boto3" >> requirements.txt
+echo "tabulate" >> requirements.txt
+
+pip install -r requirements.txt
+
+# Command Line
+python main.py [command] [region] --ami=[AMI-OVERRIDE]
+
+valid commands are "display" and "terraform".
+
+Display will reveal your VPCs/Subnets/Instances
+Terraform will output your AWS network into a main.tf and variable.tf file.
+
