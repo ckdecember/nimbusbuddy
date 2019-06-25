@@ -1,0 +1,160 @@
+import logging
+import unittest
+
+import boto3
+import botocore
+
+logger = logging.getLogger(__name__)
+
+class AWSNimbusBuddy():
+    """ Hey I'm a NimbusBuddy """
+    def __init__(self, region):
+        """ Initializes a base client for querying AWS and clients for every region """
+        # base client for basic get operations
+        self.ec2client = boto3.client('ec2')
+
+        # dictionary of ec2 clients for all regions to easily view other regions as needed.
+        regionList = self.getAllRegions()
+        self.ec2clientdict = self.initRegionList(regionList)
+        self.region = region
+        
+    def getAllRegions(self):
+        """ List of all the regions in AWS """
+        fullregionlist = self.ec2client.describe_regions()
+        regionlist = [i['RegionName'] for i in fullregionlist['Regions']]
+        return regionlist
+
+    def initRegionList(self, regionList):
+        """ initializes the clients for every region """
+        clientDict = {}
+        for region in regionList:
+            clientDict[region] = boto3.client('ec2', region_name=region)
+        return clientDict
+
+    def viewAllRegionInstances(self):
+        regionList = self.getAllRegions()
+        for region in regionList:
+            logger.debug(region)
+            instances = self.getInstances(region)
+            for reservation in instances['Reservations']:
+                for reservedInstance in reservation['Instances']:
+                    instancekeyList = ['InstanceId', 'Subnet', 'KeyName', 
+                        'State', 'SecurityGroups', 'Placement', 'Tags']
+                    for instancekey in instancekeyList:
+                        if instancekey in reservedInstance:
+                            logger.debug("{} {}".format(instancekey, reservedInstance[instancekey]))
+    
+    def getVPCandSubnetPairs(self):
+        """ retrieve matching VPC and Subnet Pairs"""
+        region = self.region
+        vpcsubnetpair = []
+        vpcsuperlist = self.getVPCs()
+        subnetsuperlist = self.getSubnets()
+
+        for vpc in vpcsuperlist:
+            for subnet in subnetsuperlist:
+                if vpc['VpcId'] == subnet['VpcId']:
+                    # perhaps can add more meta data, or just use the ids here to retrieve data ?
+                    #logger.debug(vpc)
+                    vpcsubnetpair.append((vpc['VpcId'], vpc['CidrBlock'], subnet['SubnetId'], subnet['CidrBlock']))
+        return vpcsubnetpair
+
+    def displayInstanceView(self, region, vpcid, subnetid):
+        displayList = []
+        instancesuperlist = self.getInstances()
+        for instanceList in instancesuperlist:
+            for instance in instanceList['Instances']:
+                if (instance['VpcId'] == vpcid) and (instance['SubnetId'] == subnetid):
+                    displayList.append(instance)
+        return displayList
+
+
+    def getSecurityGroups(self):
+        regionname = self.region
+        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
+        
+    def getVPCs(self):
+        regionname = self.region
+        return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']
+
+    def getSubnets(self):
+        regionname = self.region
+        return self.ec2clientdict[regionname].describe_subnets()['Subnets']
+
+    def getInstances(self):
+        regionname = self.region
+        return self.ec2clientdict[regionname].describe_instances()['Reservations']
+    
+class AWSResource():
+    def __init__(self, amazonResourceList, resourceType):
+        """ Keep core dictionary but format some values as needed """
+
+        self.resourceType = resourceType
+        self.resourceList = amazonResourceList
+        self.resourceDictList = []
+        self.expandedKeyList = ['Tags']
+        self.amazonDefaultTagName = 'Name'
+
+        # maybe make a separate loop for instances
+        if self.resourceType != 'instance':
+            for amazonResource in self.resourceList:
+                resourceDict = {}
+                skipFlag = False
+                for (key, sublist) in amazonResource.items():
+                    if key in self.expandedKeyList:
+                        # ok these are dicts, or possibly lists of dicts.
+                        # value is a sublist.  need to break it down again.
+                        # how to handle for instance tags?
+                        for subitem in sublist:
+                            if 'Key' in subitem:
+                                if subitem['Key'] == self.amazonDefaultTagName:
+                                    resourceDict[key] = subitem['Value']
+                    else:
+                        resourceDict[key] = amazonResource[key]
+                    
+                if not skipFlag:
+                    self.resourceDictList.append(resourceDict)
+        elif self.resourceType == 'instance':
+            for amazonResource in self.resourceList:
+                # Resource->ReservationList->InstanceList->InstanceData.
+                # amazon stores instances in a deeper level than subnets/vpcs
+                resourceDict = {}
+                skipFlag = False
+                for instances in amazonResource['Instances']:
+                    logger.debug("this is instances")
+                    logger.debug(instances)
+                    if instances['State']['Name'] == 'terminated':
+                        skipFlag = True
+                    for (key, value) in instances.items():
+                        # need tag flattener code here.
+                        if key == 'Tags':
+                            flattenedString = ''
+                            # [{'Key': 'Name', 'Value': 'Newinstance'}]
+                            for flatitem in value:
+                                flattenedString = flatitem['Value']
+                            logger.debug("value list")
+                            logger.debug(value)
+                            resourceDict[key] = flattenedString
+                        else:
+                            resourceDict[key] = value
+                self.resourceDictList.append(resourceDict)
+                
+        logger.debug("entering resource Dict")
+        for resourceDict in self.resourceDictList:
+            logger.debug("### type {}".format(resourceType))
+            for (key, value) in resourceDict.items():
+                logger.debug("{} {}".format(key, value))
+            logger.debug("###")
+
+def instanceSecurityGroups():
+    anb = AWSNimbusBuddy()
+    securityGroupList = []
+    instancesuperlist = anb.getInstances()
+    
+class TestNimbusBuddy(unittest.TestCase):
+    """ Basic Unit Test for boto3 / ec2 instantiation"""
+    def test_aws(self):
+        client = boto3.client('ec2')
+        isinstance(client, type(boto3.client))
+
+if  __name__ =='__main__': pass
