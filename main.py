@@ -294,7 +294,6 @@ def instanceSecurityGroups():
     securityGroupList = []
     instancesuperlist = anb.getInstances(regionname=region)
     
-    
 def instanceView(region, vpcid, subnetid):
     anb = AWSNimbusBuddy()
     displayList = []
@@ -303,12 +302,36 @@ def instanceView(region, vpcid, subnetid):
         for instance in instanceList['Instances']:
             if (instance['VpcId'] == vpcid) and (instance['SubnetId'] == subnetid):
                 displayList.append(instance)
-    return displayList        
+    return displayList
+
+def stripDictList(dictList, listOfAllowedFields):
+    logger.debug("inside strip dict")
+    tmpList = []
+    for listItem in dictList:
+        #logger.debug("list item")
+        #logger.debug(listItem)
+        tmpDict = {key: value for (key, value) in listItem.items() if key in listOfAllowedFields}
+        logger.debug(tmpDict)
+        if tmpDict:
+            tmpList.append(tmpDict)
+    logger.debug(tmpList)
+    return tmpList
 
 def testSecurityGroup(region):
     anb = AWSNimbusBuddy()
     sglist = anb.getSecurityGroups(regionname=region)
     SG = AWSResource(sglist, 'securitygroup')
+    logger.debug(SG.resourceDictList)
+
+    # if ippermissions is empty, it means no rules.  
+    # could be hard to flatten
+
+    ipPermissionsList = stripDictList(SG.resourceDictList, ['IpPermissions'])
+    #ipPermissionsList = stripDictList(ipPermissionsList, ['IpProtocol', 'IpRanges'])
+    #logger.debug(ipPermissionsList)
+
+    print (tabulate.tabulate(ipPermissionsList, headers="keys"))
+        
 
 def noop():
     print("Nothing to be done")
