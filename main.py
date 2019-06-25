@@ -56,7 +56,7 @@ def main():
         else:
             print ('need args')
     elif args.command == 'merge':
-        nd.testSecurityGroup()
+        nd.displaySecurityGroups()
     elif args.command == 'test':
         nd.display()
 

@@ -52,7 +52,7 @@ class Display():
             else:
                 print ("No Instances Found")
 
-    def testSecurityGroup(self):
+    def displaySecurityGroups(self):
         # ipprotocol -1 is ALL.
         # ip ranges is [], is that all?
         # if ippermissions is empty, it means no rules.  
