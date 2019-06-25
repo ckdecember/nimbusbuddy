@@ -9,7 +9,6 @@ import unittest
 
 import boto3
 import botocore
-import texttable
 import tabulate
 
 import terraformhandler
