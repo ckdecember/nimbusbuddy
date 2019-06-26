@@ -154,7 +154,7 @@ class Display():
         print ("TESTHERE")
         #('sg-073d12a9bc6701df6')
         sgs = self.anb.getSecurityGroups(groupId)
-        return self.getSecurityGroupRules(sgs[0])
+        return self.getSecurityGroupRules(sgs)
     
     def display(self):
         """ Displays VPCs, Subnets """
@@ -217,9 +217,10 @@ class Display():
 
         for item in displayList:
             print ("InstanceId: {} \t SecurityGroup: {}".format(item['InstanceId'], item['SecurityGroups']))
-            sgResource = self.anb.getSecurityGroups(item['SecurityGroups'])
-            rulesList = self.getSecurityGroupRules(sgResource[0])
-            print ("________________________________________________________________________________")
-            for rule in rulesList:
-                print (rule)
+            sgResources = self.anb.getSecurityGroups(item['SecurityGroups'])
+            for sgResource in sgResources:
+                rulesList = self.getSecurityGroupRules(sgResource)
+                print ("________________________________________________________________________________")
+                for rule in rulesList:
+                    print (rule)
             print ("\n")

@@ -39,7 +39,7 @@ def main():
     nd = nimbusdisplay.Display(args.region)
 
     if args.command == 'display':
-            nd.display()
+        nd.display()
     elif args.command == 'terraform':
         ami = None
         if args.ami:
