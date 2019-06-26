@@ -52,12 +52,13 @@ class Display():
             else:
                 print ("No Instances Found")
 
-    def displaySecurityGroups(self):
+    def displayAllSecurityGroups(self):
+        """ Displays all security groups """
         # ipprotocol -1 is ALL.
         # ip ranges is [], is that all?
         # if ippermissions is empty, it means no rules.  
         print ("\n")
-        sgs = self.anb.getSecurityGroups()
+        sgs = self.anb.getSecurityGroups(None)
         sgResource = aws.AWSResource(sgs, 'securitygroup')
         # if a list for type of output is around
         ['IpProtocol', 'IpRanges']
@@ -197,13 +198,14 @@ class Display():
         #logger.debug(ipPermissionsList)
         #print (tabulate.tabulate(ipPermissionsList, headers="keys"))
     
-    def getSecurityGroupRules(self, groupId):
+    def getSecurityGroupRules(self, securityGroupResource):
         """ Given a security group ID, get the rules for it."""
+        # needs ipPermission which is normally 
         #['Description', 'GroupName', 'IpPermissions', 'GroupId'])
 
         # get SG that fits the one groupId.
 
-        rulesList = ipPermission['IpPermissions']
+        rulesList = securityGroupResource['IpPermissions']
         defaultValues = ['FromPort', 'ToPort']
         formattedRulesList = []
 
@@ -283,6 +285,13 @@ class Display():
             formattedRulesList.append(ruleDisplayString)
         return formattedRulesList
 
+    def getSecurityGroupFormattedList(self, groupId):
+        """ Displays security group rules """
+        print ("TESTHERE")
+        #('sg-073d12a9bc6701df6')
+        sgs = self.anb.getSecurityGroups(groupId)
+        return self.getSecurityGroupRules(sgs[0])
+        
     def display(self):
         """ Display Simple Tables of VPCs, Instances, and Subnets """
 
@@ -340,3 +349,7 @@ class Display():
         print (tabulate.tabulate(displayList, headers='keys'))
         print (2*"\n")
 
+        # here copy the list of displayed instances
+        # use it to feed the rules
+
+        

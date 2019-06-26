@@ -79,15 +79,20 @@ class AWSNimbusBuddy():
         return displayList
 
 
-    def getSecurityGroups(self):
-        regionname = self.region
-        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
+#    def getSecurityGroups(self):
+#        regionname = self.region
+#        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
     
-    def getSecurityGroups2(self, groupId):
+    def getSecurityGroups(self, groupId):
         regionname = self.region
-        
-        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
-        
+        sgs = self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
+
+        if groupId:
+            sgList = [sg for sg in sgs if sg['GroupId'] == groupId]
+            return sgList
+        else:
+            return sgs
+
     def getVPCs(self):
         regionname = self.region
         return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']

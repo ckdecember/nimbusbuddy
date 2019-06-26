@@ -56,9 +56,11 @@ def main():
         else:
             print ('need args')
     elif args.command == 'merge':
-        nd.displaySecurityGroups()
+        nd.displayAllSecurityGroups()
     elif args.command == 'test':
         nd.display()
+    elif args.command == 'sg':
+        nd.getSecurityGroupFormattedList()
 
 if  __name__ =='__main__': main()
 
