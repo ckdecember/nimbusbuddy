@@ -70,6 +70,7 @@ class AWSNimbusBuddy():
         return vpcsubnetpair
 
     def displayInstanceView(self, vpcid, subnetid):
+        """ return a list of dicts suitable for tabulate display """
         displayList = []
         instancesuperlist = self.getInstances()
         for instanceList in instancesuperlist:
@@ -78,12 +79,8 @@ class AWSNimbusBuddy():
                     displayList.append(instance)
         return displayList
 
-
-#    def getSecurityGroups(self):
-#        regionname = self.region
-#        return self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
-    
     def getSecurityGroups(self, groupId):
+        """ get All security groups or select the group by groupId """
         regionname = self.region
         sgs = self.ec2clientdict[regionname].describe_security_groups()['SecurityGroups']
 
@@ -94,14 +91,17 @@ class AWSNimbusBuddy():
             return sgs
 
     def getVPCs(self):
+        """ get vpcs from ec2 client """
         regionname = self.region
         return self.ec2clientdict[regionname].describe_vpcs()['Vpcs']
 
     def getSubnets(self):
+        """ get subnets from ec2 client """
         regionname = self.region
         return self.ec2clientdict[regionname].describe_subnets()['Subnets']
 
     def getInstances(self):
+        """ get instances from ec2 client """
         regionname = self.region
         return self.ec2clientdict[regionname].describe_instances()['Reservations']
     

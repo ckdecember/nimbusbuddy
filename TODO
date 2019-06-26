@@ -20,6 +20,8 @@ Tech
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
+# FIX multiple security groups
+
 # short list
 - maybe make a display module.  keep pulling down the groups over and over again.  
 - pull them all once in a super list.  
