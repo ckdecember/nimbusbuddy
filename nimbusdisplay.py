@@ -73,7 +73,6 @@ class Display():
             #logger.debug(ipPermission)
             rulesList = ipPermission['IpPermissions']
             defaultValues = ['FromPort', 'ToPort']
-            logger.debug("Start of Rules")
             for rules in rulesList:
                 # if FromPort = ToPort, FromPort alone.
                 # if icmp, FromPort is Code
@@ -105,7 +104,10 @@ class Display():
                 # Code, From, or Port
                 if rules['IpProtocol'] == "icmp":
                     ruleDisplayString += " code "
-                elif rules['IpProtocol'] == "-1":
+                elif (rules['IpProtocol'] == "-1") and (not rules['IpRanges']):
+                    pass
+                # check if there is a real range difference
+                elif (rules['IpProtocol'] == "-1") and (rules['IpRanges']):
                     ruleDisplayString += " from "
                 elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
                     ruleDisplayString += " port "
@@ -113,7 +115,9 @@ class Display():
                     ruleDisplayString += " from "
                                 
                 # {FromPort},{IpRange}
-                if rules['IpProtocol'] == "-1":
+                if (rules['IpProtocol'] == "-1") and (not rules['IpRanges']):
+                    pass
+                elif rules['IpProtocol'] == "-1":
                     ruleDisplayString += "{IpRanges}".format(**rules)
                 elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
                     ruleDisplayString += "{FromPort}".format(**rules)
@@ -157,7 +161,6 @@ class Display():
 
                 #print ("display rule")
                 print (ruleDisplayString)
-            logger.debug("end of rules")
 
         # pop one out of the list
         #logger.debug(ipPermissionsList)
