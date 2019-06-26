@@ -39,9 +39,7 @@ def main():
     nd = nimbusdisplay.Display(args.region)
 
     if args.command == 'display':
-        print (args.region)
-        if args.region:
-            nd.VPCandSubnets()
+            nd.display()
     elif args.command == 'terraform':
         ami = None
         if args.ami:
@@ -55,12 +53,8 @@ def main():
             tf.terraformDump()
         else:
             print ('need args')
-    elif args.command == 'merge':
-        nd.displayAllSecurityGroups()
     elif args.command == 'test':
-        nd.display()
-    elif args.command == 'sg':
-        nd.getSecurityGroupFormattedList()
+        nd.VPCandSubnets()
 
 if  __name__ =='__main__': main()
 
