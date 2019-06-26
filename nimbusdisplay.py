@@ -197,9 +197,91 @@ class Display():
         #logger.debug(ipPermissionsList)
         #print (tabulate.tabulate(ipPermissionsList, headers="keys"))
     
-    def displaySecurityGroupRules(self):
+    def getSecurityGroupRules(self, groupId):
         """ Given a security group ID, get the rules for it."""
-        pass
+        #['Description', 'GroupName', 'IpPermissions', 'GroupId'])
+
+        # get SG that fits the one groupId.
+
+        rulesList = ipPermission['IpPermissions']
+        defaultValues = ['FromPort', 'ToPort']
+        formattedRulesList = []
+
+        for rules in rulesList:
+            for defaultValue in defaultValues:
+                rules.setdefault(defaultValue, '')
+            # ("{IpProtocol} {Code,From,Port} {FromPort,IpRange} {From,to,NULL} {IpRanges,ToPort} {NULL, NULL, From {IpRanges}, NULL}".format(**rules))
+
+            # {IpProtocol}
+            if rules['IpProtocol'] == "-1":
+                ruleDisplayString = "All traffic"
+            else:
+                ruleDisplayString = ("{IpProtocol}".format(**rules))
+            
+            # Code, From, or Port
+            if rules['IpProtocol'] == "icmp":
+                ruleDisplayString += " code "
+            elif (rules['IpProtocol'] == "-1") and (not rules['IpRanges']):
+                pass
+            # check if there is a real range difference
+            elif (rules['IpProtocol'] == "-1") and (rules['IpRanges']):
+                ruleDisplayString += " from "
+            elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                ruleDisplayString += " port "
+            else:
+                ruleDisplayString += " from "
+                            
+            # {FromPort},{IpRange}
+            if (rules['IpProtocol'] == "-1") and (not rules['IpRanges']):
+                pass
+            elif (rules['IpProtocol'] == "-1") and (rules['IpRanges']):
+                cidrList = [ipRange['CidrIp'] for ipRange in rules['IpRanges']]
+                expandedCidrString = ", ".join(cidrList)
+                ruleDisplayString += "{}".format(expandedCidrString)
+            elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                ruleDisplayString += "{FromPort}".format(**rules)
+            elif (rules['IpProtocol'] == "icmp"):
+                ruleDisplayString += "{FromPort}".format(**rules)
+            else:
+                expandedCidrString = utils.flattenAndExpandList(rules['IpRanges'])
+                ruleDisplayString += "{}".format(expandedCidrString)
+            
+            # "From, To, or NULL"
+            if rules['IpProtocol'] == "-1":
+                pass
+            elif rules['IpProtocol'] == "icmp":
+                ruleDisplayString += " from "
+            elif (rules['ToPort'] == rules['FromPort']) and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                pass
+            elif (rules['ToPort'] != "-1") and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                ruleDisplayString += " to "
+            else:
+                pass
+
+            # {IpRanges,ToPort}
+            if (rules['ToPort'] == rules['FromPort']) and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                pass
+            elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                ruleDisplayString += "{ToPort}".format(**rules)
+            elif (rules['IpProtocol'] == "icmp"):
+                expandedCidrString = utils.flattenAndExpandList(rules['IpRanges'])
+                ruleDisplayString += "{}".format(expandedCidrString)
+
+            # From
+            if (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                ruleDisplayString += " from "
+            else:
+                pass
+
+            # {IpRange}
+            if (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                expandedCidrString = utils.flattenAndExpandList(rules['IpRanges'])
+                ruleDisplayString += "{}".format(expandedCidrString)
+            else:
+                pass
+            # push to list to return???
+            formattedRulesList.append(ruleDisplayString)
+        return formattedRulesList
 
     def display(self):
         """ Display Simple Tables of VPCs, Instances, and Subnets """
