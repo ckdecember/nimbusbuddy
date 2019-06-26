@@ -37,3 +37,11 @@ def flattenDict(flattenable, flattenKey):
         if flattenKey in flattenable:
             flatstring = flattenable[flattenKey]
     return flatstring
+
+def flattenAndExpandList(listToFlatten):
+    flatStringList = []
+    for listItem in listToFlatten:
+        flatString = " ".join("{!s}: {!s}".format(key, value) for (key, value) in listItem.items())
+        flatStringList.append(flatString)
+    flatString = ", ".join(flatStringList)
+    return flatString
