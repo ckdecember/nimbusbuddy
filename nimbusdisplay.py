@@ -110,7 +110,7 @@ class Display():
 
                 # {IpProtocol}
                 if rules['IpProtocol'] == "-1":
-                    ruleDisplayString = "All traffic"
+                    ruleDisplayString = "all traffic"
                 else:
                     ruleDisplayString = ("{IpProtocol}".format(**rules))
                 
@@ -216,7 +216,7 @@ class Display():
 
             # {IpProtocol}
             if rules['IpProtocol'] == "-1":
-                ruleDisplayString = "All traffic"
+                ruleDisplayString = "all traffic"
             else:
                 ruleDisplayString = ("{IpProtocol}".format(**rules))
             
@@ -352,4 +352,11 @@ class Display():
         # here copy the list of displayed instances
         # use it to feed the rules
 
-        
+        for item in displayList:
+            print ("InstanceId: {} SecurityGroup: {}".format(item['InstanceId'], item['SecurityGroups']))
+            sgResource = self.anb.getSecurityGroups(item['SecurityGroups'])
+            rulesList = self.getSecurityGroupRules(sgResource[0])
+            print ("____________________")
+            for rule in rulesList:
+                print (rule)
+            print ("\n")
