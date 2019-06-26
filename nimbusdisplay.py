@@ -65,20 +65,98 @@ class Display():
         # fromport is start range of ports.  toport is end range of ports
         # 'IpRanges': [{'CidrIp': '104.247.55.102/32', 'Description': ''}, {'CidrIp': '69.115.177.236/32', 'Description': ''}]
         # IpRanges is a list of CidrIp/Description dicts.  
+        # FromPort == icmp code when in icmp mode
+        # ToPort == -1 for icmp
 
         ipPermissionsList = utils.stripDictList(sgResource.resourceDictList, ['Description', 'GroupName', 'IpPermissions'])
         for ipPermission in ipPermissionsList:
-            logger.debug(ipPermission)
+            #logger.debug(ipPermission)
             rulesList = ipPermission['IpPermissions']
+            defaultValues = ['FromPort', 'ToPort']
             logger.debug("Start of Rules")
             for rules in rulesList:
-                if "FromPort" in rules.keys():
-                    continue
-                # interpret the dict keys
-                if "FromPort" in rules:
-                    #print ("\tPort: {FromPort} IpProtocol: {IpProtocol}".format(**rules))
-                    continue
-                logger.debug(rules)
+                # if FromPort = ToPort, FromPort alone.
+                # if icmp, FromPort is Code
+                # if IpProtocol tcp or udp, treat as normal.
+                # IpRanges: CidrIp 
+                # maybe set defaults here?
+                for defaultValue in defaultValues:
+                    rules.setdefault(defaultValue, '')
+                
+                # if icmp, change Port to icmp-code, remove ToPort
+                # if protocol is not 6 and 17 (tcp and udp respectively) and icmp (1) OR -1, no ports.
+                # if normal tcp/udp traffic, and FromPort != ToPort, keep range
+                # if normal tcp/udp traffic and FromPort == ToPort, drop ToPort.
+
+                #print ("{IpProtocol} Code {FromPort} From {IpRanges}".format(**rules))
+                #print ("{IpProtocol} From {IpRanges}".format(**rules))
+                
+                #print ("{IpProtocol} Port {FromPort} to {ToPort} From {IpRanges}".format(**rules))
+                #print ("{IpProtocol} Port {FromPort} From {IpRanges}".format(**rules))
+
+                #print ("{IpProtocol} {Code,From,Port} {FromPort,IpRange} {From,to,NULL} {IpRanges,ToPort} {NULL, NULL, From {IpRanges}, NULL}".format(**rules))
+
+                # {IpProtocol}
+                if rules['IpProtocol'] == "-1":
+                    ruleDisplayString = "All traffic"
+                else:
+                    ruleDisplayString = ("{IpProtocol}".format(**rules))
+                
+                # Code, From, or Port
+                if rules['IpProtocol'] == "icmp":
+                    ruleDisplayString += " code "
+                elif rules['IpProtocol'] == "-1":
+                    ruleDisplayString += " from "
+                elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                    ruleDisplayString += " port "
+                else:
+                    ruleDisplayString += " from "
+                                
+                # {FromPort},{IpRange}
+                if rules['IpProtocol'] == "-1":
+                    ruleDisplayString += "{IpRanges}".format(**rules)
+                elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                    ruleDisplayString += "{FromPort}".format(**rules)
+                elif (rules['IpProtocol'] == "icmp"):
+                    ruleDisplayString += "{FromPort}".format(**rules)
+                else: 
+                    ruleDisplayString += "{IpRanges}".format(**rules)
+
+                #logger.debug(rules)
+                # "From, To, or NULL"
+                if rules['IpProtocol'] == "-1":
+                    pass
+                elif rules['IpProtocol'] == "icmp":
+                    ruleDisplayString += " from "
+                elif (rules['ToPort'] == rules['FromPort']) and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                    pass
+                elif (rules['ToPort'] != "-1") and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                    ruleDisplayString += " to "
+                else:
+                    pass
+
+                # {IpRanges,ToPort}
+                if (rules['ToPort'] == rules['FromPort']) and ((rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp")):
+                    pass
+                elif (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                    ruleDisplayString += "{ToPort}".format(**rules)
+                elif (rules['IpProtocol'] == "icmp"):
+                    ruleDisplayString += "{IpRanges}".format(**rules)
+                
+                # From
+                if (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                    ruleDisplayString += " from "
+                else:
+                    pass
+
+                # {IpRange}
+                if (rules['IpProtocol'] == "tcp") or (rules['IpProtocol'] == "udp"):
+                    ruleDisplayString += "{IpRanges}".format(**rules)
+                else:
+                    pass
+
+                #print ("display rule")
+                print (ruleDisplayString)
             logger.debug("end of rules")
 
         # pop one out of the list
