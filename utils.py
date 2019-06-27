@@ -1,3 +1,5 @@
+import unittest
+
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -45,3 +47,7 @@ def flattenAndExpandList(listToFlatten):
         flatStringList.append(flatString)
     flatString = ", ".join(flatStringList)
     return flatString
+
+class TestUtils(unittest.TestCase):
+    def testTest(self):
+        pass

@@ -166,15 +166,36 @@ class AWSResource():
                 logger.debug("{} {}".format(key, value))
             logger.debug("###")
 
-def instanceSecurityGroups():
-    anb = AWSNimbusBuddy()
-    securityGroupList = []
-    instancesuperlist = anb.getInstances()
-    
 class TestNimbusBuddy(unittest.TestCase):
     """ Basic Unit Test for boto3 / ec2 instantiation"""
     def test_aws(self):
         client = boto3.client('ec2')
         isinstance(client, type(boto3.client))
+
+class TestAWS(unittest.TestCase):
+    """ Basic Unit tests for all functions """
+    def test_getSecurityGroups(self):
+        anb = AWSNimbusBuddy('us-west-2')
+        value = anb.getSecurityGroups(None)
+        isinstance(value, list)
+    
+    def test_getAllRegions(self):
+        anb = AWSNimbusBuddy('us-west-2')
+        regionlist = anb.getAllRegions()
+        regionlist.sort()
+        awsregionlist = ['ap-northeast-1', 'ap-northeast-2', 'ap-south-1', 'ap-southeast-1', 
+            'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-north-1', 'eu-west-1', 
+            'eu-west-2', 'eu-west-3', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
+        self.assertEqual(regionlist, awsregionlist)
+    
+    def test_initRegionList(self):
+        regionlist = ['ap-northeast-1', 'ap-northeast-2', 'ap-south-1', 'ap-southeast-1', 
+            'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-north-1', 'eu-west-1', 
+            'eu-west-2', 'eu-west-3', 'sa-east-1', 'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
+        anb = AWSNimbusBuddy('us-west-2')
+        anb.initRegionList(regionlist)
+        ec2keys = list(anb.ec2clientdict.keys())
+        ec2keys.sort()
+        self.assertEquals(ec2keys, regionlist)
 
 if  __name__ =='__main__': pass
