@@ -1,20 +1,49 @@
 import logging
+
+import aws
+
 logger = logging.getLogger(__name__)
+#logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 class TerraformHandler():
     """ Manages Terraform Configuration Outputs"""
-    def __init__(self, ami, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
+    def __init__(self, region, targetRegion, ami, mainConfigFileName='cloudbuddy-main.tf', variableFileName='cloudbuddy-var.tf'):
         """Can rename configuration files"""
         self.mainConfigFileName = mainConfigFileName
         self.variableFileName = variableFileName
         self.resourceDictList = {}
         self.amiOverride = ami
+
+        self.anb = aws.AWSNimbusBuddy(region)
+        self.targetRegion = targetRegion
+
+        VPCList = self.anb.getVPCs()
+        vpcs2 = aws.AWSResource(VPCList, 'vpc')
+        self.resourceDictList['vpc'] = vpcs2.resourceDictList
+
+        SubnetList = self.anb.getSubnets()
+        subnets2 = aws.AWSResource(SubnetList, 'subnet')
+        self.resourceDictList['subnet'] = subnets2.resourceDictList
+
+        InstanceList = self.anb.getInstances()
+        inst2 = aws.AWSResource(InstanceList, 'instance')
+        self.resourceDictList['instance'] = inst2.resourceDictList
     
-    def terraformDump(self, region, targetRegion):
+    def terraformDump(self):
         """Dumps out two configuration files.  Iterates through Provider, Resource, and Variable sections.
            Within the Resource section, specifically drop VPC, Subnet, Instance configuration.
         """
-        # making the MAIN.TF file equivalent        
+        # making the MAIN.TF file equivalent
+        targetRegion = self.targetRegion
+
         fp = open(self.mainConfigFileName, 'w')
 
         tfcode = self.providerOutput(region=targetRegion)
@@ -160,6 +189,11 @@ class TerraformHandler():
         }}\n\n""".format(prefix="ami", varName=varName, tags=tags)
         return variableStr
     
+    def securityGroup():
+        """vpc_security_group_ids = ["sg-085696c3b2fafa552"]"""
+        pass
+        
+
     def setDataList(self, dataList, resourceType):
         """ Set the resource dict lists for later processing """
         self.resourceDictList[resourceType] = dataList

@@ -14,16 +14,17 @@ Tech
     - @VPC
     - @Subnets
     - @EC2 instances 
-    - ELB 
-    - EKS (optional)
     - security groups
     - default gateways
 
 #Visualization
 - VPCs, Subnets - Internet Gateways - Routing Tables, EC2s - SecurityGroups 
 
-#maybe keep it mostly in dicts?  remove the class abstraction perhaps?
+# FIX multiple security groups
 
+# short list
+- maybe make a display module.  keep pulling down the groups over and over again.  
+- pull them all once in a super list.  
 
 Will also need to add extraction for securitygroups and internet gateways as well.
 
@@ -33,94 +34,6 @@ Versioning or storing of older configuration is also on the list, but might get 
 - create terraform config
 - save config (custom settings)
 
-- allow passing of target region
-
-# given a region and aws credentials...
-
-# VPCs
-
-# able to move from AWS live to terraform config somewhat.
-# clean that up a bit to handle more than one vpc
-# save the existing lists somehow in a datastructure or serialize.
-# add a command line arg to execute a terraform dump
-
-instances should be unique and rely on just $instanceId
-instance_type = instanceType_$instanceid
-ami = ami_$instanceid
-subnetid = $aws_subnet.-subnetvalue.id -- seems to works
-tags are whatever.
-
-
-
-resource "aws_instance" "i-0bd8f2d4f64621d4f" {
-            instance_type = "t2.micro"
-            ami = "${var.i-0bd8f2d4f64621d4f}"
-            subnet_id = "${aws_subnet.subnet-09663327.id}"
-            tags = {
-                Name = "None"
-            }
-        }
-
-
-#resource "aws_subnet" "primary" {
-  availability_zone = "${data.aws_availability_zones.available.names[0]}"
-
-  # ...
-}
-dict_keys(['AvailabilityZone', 'AvailabilityZoneId', 'AvailableIpAddressCount', 'CidrBlock', 'DefaultForAz', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'AssignIpv6AddressOnCreation', 'Ipv6CidrBlockAssociationSet', 'Tags', 'SubnetArn'])
-
-dict_keys(['AvailabilityZone', 'CidrBlock', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'Tags', 'SubnetArn'])
-
-
-we now have a vpc datastructure
-dump the vpc datastructure into terraform.
-each component is a class
-
-# RECORD subnet's CIDR.
-# need to dynamically generate a variables.tf and main.tf
-# pyhcl
-# pyhcl might not write to hcl. oops.
-# make your own parser or template reader/writer.
-# need variables for flexibility
-# need core main.tf file.
-# able to read it in json though.  so probably not too hard.
-# either expand all variables OR
-# create variables and main.tf with variable like values 
-
-
-# core stuff
-#
-provider "aws" {
-    region = "${var.region}"
-}
-
-resource "aws_vpc" "vpc_007" {
-  cidr_block = "${var.vpc_cidr}"
-  tags = {
-      Name = "The Lich's Den"
-  }
-}
-
-resource "aws_subnet" "forLiches" {
-  vpc_id     = "${aws_vpc.vpc_007.id}"
-  cidr_block = "${var.subnet_cidr"
-
-  tags = {
-    Name = "lich's subnet"
-  }
-}
-
-resource "aws_instance" "dracolich1" {
-  instance_type = "t2.micro"
-  #ami = "ami-06397100adf427136"
-  ami = "${var.ami_id}"
-  subnet_id = "${aws_subnet.forLiches.id}"
-
-  tags = {
-    Name = "${var.snoopdoggydog}"
-  }
-}
-
 resource "aws_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.main.id}"
 
@@ -128,19 +41,6 @@ resource "aws_internet_gateway" "gw" {
     Name = "main"
   }
 }
-#
-
-create a dataset, or rule
-vpc_id, cidrblock, tags, state, ownerid 
-
-describe_vpcs()
-this finds all vpcs and cidr block associations (indirectly the subnets are here) 
->>> cli.describe_vpcs()['Vpcs'][0].keys()
-dict_keys(['CidrBlock', 'DhcpOptionsId', 'State', 'VpcId', 'OwnerId', 'InstanceTenancy', 'CidrBlockAssociationSet', 'IsDefault', 'Tags'])
-
-# subnets
-cli.describe_subnets()['Subnets'][0].keys()
-dict_keys(['AvailabilityZone', 'AvailabilityZoneId', 'AvailableIpAddressCount', 'CidrBlock', 'DefaultForAz', 'MapPublicIpOnLaunch', 'State', 'SubnetId', 'VpcId', 'OwnerId', 'AssignIpv6AddressOnCreation', 'Ipv6CidrBlockAssociationSet', 'Tags', 'SubnetArn'])    
 
 # internet gateways
 cli.describe_internet_gateways()['InternetGateways'][0]['Attachments'] -> this gives VpcID.
@@ -150,15 +50,6 @@ cli.describe_internet_gateways()['InternetGateways'][0]['Attachments'] -> this g
 dict_keys(['Associations', 'PropagatingVgws', 'RouteTableId', 'Routes', 'Tags', 'VpcId', 'OwnerId'])
 ties subnet id, actual destination, and gateway ids, and vpcs
 
-#instances
->>> cli.describe_instances()['Reservations'][0].keys()
-dict_keys(['Groups', 'Instances', 'OwnerId', 'ReservationId'])
-
-
-#Configuration
-- record key items.  
-
-save these settings if possible
 AWS instantiation toggles
 - ami (amazon machine image) -  'ImageId': '',
 - num instances - might be a loop of number of instances within reservations/instances.
@@ -168,6 +59,7 @@ AWS instantiation toggles
 - placement group? wtf? - UNKNOWN
 - capacity - yeah, tower. - HMMM
 - iam role - CAN'T FIND ROLE, SO WEIRD
+
 KeyName - but can't really be used in terra??!?
 - enable termination protection - PROB NOT
 - volume type - VolumeId but this is very specific.
@@ -175,21 +67,9 @@ KeyName - but can't really be used in terra??!?
 - security-group - SecurityGroups[ groupname, groupid], tuples
 can you be part of more than one security group? -- yes you can.  and it is PERMISSIVE.
 
-- security-group - SecurityGroups[ groupname, groupid], tuples
-
-terraform
-VPCs
-aws_main_route_table_association
-aws_internet_gateway
-aws_security_group OR aws_security_group_rules -- will cause conflict!!!
-
-
-network ACL 
-a network acl can be applied to more than one subnet
 security group 
 for instances.  can be set in group of instances.
 
-- able to connect to AWS and list VPCs, EC2s, Subnets, which EC2 is in which Subnet.  
 - ALSO, parse all regions to check for existing EC2
 - Internet Gateways and VPCs
 
@@ -198,95 +78,5 @@ for instances.  can be set in group of instances.
 - find stale EC2s, and prepare to self destroy
 - estimate costs - warn you on average daily (same as billing?)
 
-- maybe AWS config saves? - hard to do 
-
-- focus more on management
-- turn down instances or turn up 
-
-- quick dashboard
-using tables 
-
-- notes 
-boto3.client works only per region, and must be initialized as such.
-
-result is a webpage which is zipped/tarred up and uploaded somewhere or anywhere.
-you can deploy/test/view it as a webpage for localbrowser OR webserver
-
-- also dumps a large custom config file of sorts.  one that is visualizable.  
-- advantage here is it can be versioned controlled.  you can also replay it back to view your old network
-- could also give suggestions on how to rebuild it ORRRRR use TERRAFORM to rebuild it.
-
-- maybe could be versioned?  but not sure.  i suppose it's just text so it can be more easily stored.
-- this way you can look at old versions of the config dump so to speak.
-
-# elastic load balancer
-client = boto3.client('elb')
-
-List VPCs and the EC2's within
-
-Gateways for each Subnet - this is good to know you can get out and a common problem.
-
-# get AWS credentials
-# get from environment variables
-# check for failure on no-auth
-# Boto3 will check these environment variables for credentials:
-#AWS_ACCESS_KEY_ID
-#AWS_SECRET_ACCESS_KEY
-#AWS_SESSION_TOKEN
-#The session key for your AWS account. This is only needed when you are using temporary credentials. The AWS_SECURITY_TOKEN environment variable can also be used, but is only supported for backwards compatibility purposes. AWS_SESSION_TOKEN is supported by multiple AWS SDKs besides python.
-
-populate a dictionary with subnetID is key. value is list of route dicts.
-SubnetID is here, so you can match subnet ID with a list of Routes!!!
-
-can we tie subnets+internet gateways together off of VPC?  should we use sql for this?  or just normal comparisons
-
-SIDE FEATURES
-# jenkins as ci/cd.  pretty heavy.
-# using Docker to package the product
-# 
-
 # unit tests for CI/CD runs
 python3 -m unittest main.py 
-
-
-# keys for ec2 instances deep 
-dict_keys(['AmiLaunchIndex', 'ImageId', 'InstanceId', 'InstanceType', 'KeyName', 
-'LaunchTime', 'Monitoring', 'Placement', 'PrivateDnsName', 'PrivateIpAddress', 
-'ProductCodes', 'PublicDnsName', 'State', 'StateTransitionReason', 'SubnetId', 
-'VpcId', 'Architecture', 'BlockDeviceMappings', 'ClientToken', 'EbsOptimized', 
-'EnaSupport', 'Hypervisor', 'NetworkInterfaces', 'RootDeviceName', 'RootDeviceType', 
-'SecurityGroups', 'SourceDestCheck', 'StateReason', 'VirtualizationType', 'CpuOptions', 
-'CapacityReservationSpecification', 'HibernationOptions'])
-
-#super structure
-EC2 InstanceId, availability zone, current region, VpcID, SubnetID, PrivateIPAddress,
-PublicIpName (if exists), State, PublicDnsName, Tags (variable if they exist or not - these are special custom descriptions)
-
-elastic ips just show up as public ips, PublicIp, PublicIPAddress
-
-# terraform example for reusing existing infrastructure
-# terraform import will not regen configs yet.  hm.  
-# can use custom modules, then reference module by name.  can only access outputted values
-
-# to choose a vpc, choose subnet for instance.  
-# subnets must exist witin a VPC, VPC is a superset
-# RECORD vpc's CIDR.
-# RECORD subnet's CIDR.
-
-variable "ami_id" {
-  description = "AMI ID"
-  default = "ami-xxxxxxxx"
-}
-
-variable "subnet_prv1" {
-  description = "Private Subnet 1"
-  default = "subnet-xxxxxx"
-}
-Then in your main.tf to create the resource:
-
-resource "aws_instance" "example" {
-   instance_type = "t2.micro"
-   ami = "${var.ami_id}"
-   ......
-   subnet_id = "${var.subnet_prv1}"
-}
