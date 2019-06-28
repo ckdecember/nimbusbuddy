@@ -149,13 +149,6 @@ class Display():
             formattedRulesList.append(ruleDisplayString)
         return formattedRulesList
 
-    #def getSecurityGroupFormattedList(self, groupId):
-    #    """ Displays security group rules """
-    #    print ("TESTHERE")
-        #('sg-073d12a9bc6701df6')
-    #    sgs = self.anb.getSecurityGroups(groupId)
-    #    return self.getSecurityGroupRules(sgs)
-    
     def display(self):
         """ Displays VPCs, Subnets """
 
