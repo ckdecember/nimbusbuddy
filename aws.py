@@ -6,7 +6,7 @@ import botocore
 
 logger = logging.getLogger(__name__)
 
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
@@ -143,6 +143,7 @@ class AWSResource():
                 for instances in amazonResource['Instances']:
                     logger.debug("this is instances")
                     logger.debug(instances)
+                    logger.debug(instances['State'])
                     if instances['State']['Name'] == 'terminated':
                         skipFlag = True
                     for (key, value) in instances.items():
@@ -157,7 +158,10 @@ class AWSResource():
                             resourceDict[key] = flattenedString
                         else:
                             resourceDict[key] = value
-                self.resourceDictList.append(resourceDict)
+                if skipFlag:
+                    continue
+                else:
+                    self.resourceDictList.append(resourceDict)
                 
         logger.debug("entering resource Dict")
         for resourceDict in self.resourceDictList:
