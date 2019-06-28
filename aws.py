@@ -200,6 +200,19 @@ class TestAWS(unittest.TestCase):
         anb.initRegionList(regionlist)
         ec2keys = list(anb.ec2clientdict.keys())
         ec2keys.sort()
-        self.assertEquals(ec2keys, regionlist)
+        self.assertEqual(ec2keys, regionlist)
+    
+    def test_terminated_instance(self):
+        # test to ensure terminated instances do NOT leak through
+        anb = AWSNimbusBuddy('us-west-2')
+        resourceList = anb.getInstances()
+        awsresource = AWSResource(resourceList, "instance")
+        for resource in awsresource.resourceDictList:
+            self.assertNotEqual(resource['State']['Name'], 'terminated', msg="Terminated Instances leaked through")
+    
+    def test_getVpcsAndSubnets(self):
+        pass
 
+
+        
 if  __name__ =='__main__': pass
