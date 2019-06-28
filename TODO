@@ -78,5 +78,4 @@ for instances.  can be set in group of instances.
 - find stale EC2s, and prepare to self destroy
 - estimate costs - warn you on average daily (same as billing?)
 
-# unit tests for CI/CD runs
-python3 -m unittest main.py 
+# testing git cred
