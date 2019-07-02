@@ -49,6 +49,7 @@ export AWS_DEFAULT_REGION=[DEFAULTREGION]
   
 # Command Line
 python main.py [command] [region] --ami=[AMI-OVERRIDE]  
+(--ami is optional)  
 
 valid commands are "display" and "terraform".  
   
@@ -58,3 +59,6 @@ Terraform will output your AWS network into a main.tf and variable.tf file.
 --ami overrides the terraform output to use this AMI for all instances.  This is handy when your previous AMI does NOT exist in the target AWS zone.  
 --targetregion changes the "region" in the terraform configuration so you can target a different region than the one you backed up from.
 
+Example:  
+python main.py terraform us-west-1  
+This will login to your us-west-1 region, extract the configuration, and output a terraform configuration file that matches your us-west-1 cloud.  
