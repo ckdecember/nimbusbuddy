@@ -2,14 +2,14 @@
 
 # What is it?
 
-A tool to help visualize your cloud infrastrructure and also allows you to output terraform configurations on your existing AWS.  Currently it supports VPCs, Subnets, and Instances.  
+A tool to help visualize your cloud infrastructure and also allows you to output terraform configurations on your existing AWS.  Currently it supports VPCs, Subnets, and Instances.  
 
 Support for Security Groups and Internet Gateways are on the short list.
 
-In the future, I would like to extend nimbus buddy to work with other major cloud services such as Azure and Google Cloud Platform.  Another wishlist feature would be a way to migrate between AWS and Azure or Google Cloud Platform.
+In the future, I would like to extend nimbus buddy to work with other major cloud services such as Azure and Google Cloud Platform.  Another wish list feature would be a way to migrate between AWS and Azure or Google Cloud Platform.
 
 # Tech Specs
-It is a python script that utilizes boto3 to make AWS requests and transforms it into nice ASCII tables (pending support for HTML).  It also outputs configuratrion files for terraform (https://www.terraform.io/) which is a really powerful infrastructure as code tool.  I highly suggest you take a look at it if you are into doing mass deployments.
+It is a python script that utilizes boto3 to make AWS requests and transforms it into nice ASCII tables (pending support for HTML).  It also outputs configuration files for terraform (https://www.terraform.io/) which is a really powerful infrastructure as code tool.  I highly suggest you take a look at it if you are into doing mass deployments.
 
 # ... but why?
 
@@ -38,7 +38,7 @@ echo "tabulate" >> requirements.txt
 pip install -r requirements.txt  
 
 # Configuration
-A valid AWS account and proper passingn of credentials is required for this application to work.
+A valid AWS account and proper passing of credentials is required for this application to work.
 
 You can either set three AWS environment variables with the proper credentials or you can run "aws configure"
 
