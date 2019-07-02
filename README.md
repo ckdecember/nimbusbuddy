@@ -28,33 +28,33 @@ I plan to extend the code so it will work with other cloud technologies, so I'd 
 - tabulate
 
 # Installation
-sudo apt install awscli
-aws configure
-sudo apt install python3-pip
-
-echo "boto3" >> requirements.txt
-echo "tabulate" >> requirements.txt
-
-pip install -r requirements.txt
+sudo apt install awscli  
+aws configure  
+sudo apt install python3-pip  
+  
+echo "boto3" >> requirements.txt  
+echo "tabulate" >> requirements.txt  
+  
+pip install -r requirements.txt  
 
 # Configuration
 A valid AWS account and proper passingn of credentials is required for this application to work.
 
 You can either set three AWS environment variables with the proper credentials or you can run "aws configure"
 
-export AWS_ACCESS_KEY_ID=[ACCESSKEY]
-export AWS_SECRET_ACCESS_KEY=[SECRETACCESSKEY]
-export AWS_DEFAULT_REGION=[DEFAULTREGION]
-
-
+export AWS_ACCESS_KEY_ID=[ACCESSKEY]  
+export AWS_SECRET_ACCESS_KEY=[SECRETACCESSKEY]  
+export AWS_DEFAULT_REGION=[DEFAULTREGION]  
+  
+  
 # Command Line
-python main.py [command] [region] --ami=[AMI-OVERRIDE]
+python main.py [command] [region] --ami=[AMI-OVERRIDE]  
 
-valid commands are "display" and "terraform".
+valid commands are "display" and "terraform".  
+  
+Display will reveal your VPCs/Subnets/Instances  
+Terraform will output your AWS network into a main.tf and variable.tf file.  
 
-Display will reveal your VPCs/Subnets/Instances
-Terraform will output your AWS network into a main.tf and variable.tf file.
-
---ami overrides the terraform output to use this AMI for all instances.  This is handy when your previous AMI does NOT exist in the target AWS zone.
+--ami overrides the terraform output to use this AMI for all instances.  This is handy when your previous AMI does NOT exist in the target AWS zone.  
 --targetregion changes the "region" in the terraform configuration so you can target a different region than the one you backed up from.
 
