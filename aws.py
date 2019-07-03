@@ -131,7 +131,6 @@ class AWSResource():
                                     resourceDict[key] = subitem['Value']
                     else:
                         resourceDict[key] = amazonResource[key]
-                    
                 if not skipFlag:
                     self.resourceDictList.append(resourceDict)
         elif self.resourceType == 'instance':
@@ -177,7 +176,17 @@ class TestNimbusBuddy(unittest.TestCase):
         isinstance(client, type(boto3.client))
 
 class TestAWS(unittest.TestCase):
-    """ Basic Unit tests for all functions """
+    """ Basic Unit tests """
+    def test_boto3(self):
+        ec2client = boto3.client('ec2')
+        isinstance(boto3.client, type(ec2client))
+    
+    def test_getAWSResource(self):
+        anb = AWSNimbusBuddy('us-west-2')
+        instances = anb.getInstances()
+        resource = AWSResource(instances, "instance")
+        isinstance(resource.resourceDictList, list)
+
     def test_getSecurityGroups(self):
         anb = AWSNimbusBuddy('us-west-2')
         value = anb.getSecurityGroups(None)
@@ -211,6 +220,8 @@ class TestAWS(unittest.TestCase):
             self.assertNotEqual(resource['State']['Name'], 'terminated', msg="Terminated Instances leaked through")
     
     def test_getVpcsAndSubnets(self):
+        #getVPCandSubnetPairs
+        # maybe get a mock instead?  or test more closely
         pass
 
 
