@@ -213,6 +213,7 @@ class TestAWS(unittest.TestCase):
     
     def test_terminated_instance(self):
         # test to ensure terminated instances do NOT leak through
+        # unfortunately needs a mock since original us-west-2 might not have it.
         anb = AWSNimbusBuddy('us-west-2')
         resourceList = anb.getInstances()
         awsresource = AWSResource(resourceList, "instance")
