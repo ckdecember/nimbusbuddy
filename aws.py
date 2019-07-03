@@ -107,7 +107,7 @@ class AWSNimbusBuddy():
     
 class AWSResource():
     def __init__(self, amazonResourceList, resourceType):
-        """ Keep core dictionary but format some values as needed """
+        """ General Resource for Amazon """
 
         self.resourceType = resourceType
         self.resourceList = amazonResourceList
