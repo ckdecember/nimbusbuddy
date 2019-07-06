@@ -13,6 +13,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 def stripDictList(dictList, listOfAllowedFields):
+    """ strip excessive fields from a dictionary """
     #logger.debug("inside strip dict")
     tmpList = []
     for listItem in dictList:
@@ -29,6 +30,7 @@ def flattenItem(displayitem, key, flattenkey):
     return flattenDict(displayitem[key], flattenkey)
 
 def flattenDict(flattenable, flattenKey):
+    """ turns a list into a flatstring on the first value"""
     flatstring = ''
     
     if type(flattenable) == list:
@@ -41,6 +43,7 @@ def flattenDict(flattenable, flattenKey):
     return flatstring
 
 def flattenAndExpandList(listToFlatten):
+    """ expands a list, rejoins them with a comma delimited flattened string """
     flatStringList = []
     for listItem in listToFlatten:
         flatString = " ".join("{!s}: {!s}".format(key, value) for (key, value) in listItem.items())

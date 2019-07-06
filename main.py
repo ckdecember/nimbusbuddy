@@ -56,7 +56,11 @@ def main():
     elif args.command == 'test':
         nd.VPCandSubnets()
 
-if  __name__ =='__main__': main()
+if  __name__ =='__main__':
+    main()
+
+def test_displayarg(self):
+    pass
 
 __version__ = '0.4'
 __author__ = 'Carroll Kong'

@@ -45,13 +45,13 @@ class Display():
             # this dict helps flatten dictionaries that are values to keys.  
             # Key: Flatten Key
             
-            flattenDict = {'Tags': 'Value', 'State': 'Name', 'SecurityGroups': 'GroupId'}
+            flattenDictTags = {'Tags': 'Value', 'State': 'Name', 'SecurityGroups': 'GroupId'}
 
             print ("VPC: {} {} Subnet: {} {} ".format(vpcid, vpccidr, subnetid, subnetcidr))
             print ("________________________________________________________")
             for originalitem in originalList:
                 displayitem = {key: value for (key, value) in originalitem.items() if key in allowedKeys}
-                for (fdkey, fdvalue) in flattenDict.items():
+                for (fdkey, fdvalue) in flattenDictTags.items():
                     if fdkey in displayitem:
                         displayitem[fdkey] = utils.flattenItem(displayitem, fdkey, fdvalue)
                 displayList.append(displayitem)
@@ -149,13 +149,6 @@ class Display():
             formattedRulesList.append(ruleDisplayString)
         return formattedRulesList
 
-    def getSecurityGroupFormattedList(self, groupId):
-        """ Displays security group rules """
-        print ("TESTHERE")
-        #('sg-073d12a9bc6701df6')
-        sgs = self.anb.getSecurityGroups(groupId)
-        return self.getSecurityGroupRules(sgs)
-    
     def display(self):
         """ Displays VPCs, Subnets """
 
