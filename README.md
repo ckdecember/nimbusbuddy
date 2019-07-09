@@ -64,23 +64,17 @@ python main.py terraform us-west-1
 This will login to your us-west-1 region, extract the configuration, and output a terraform configuration file that matches your us-west-1 cloud.  
 
 # File Structure
-├── aws.py
-├── LICENSE
-├── main.py
-├── nimbusdisplay.py
-├── __pycache__
-│   ├── aws.cpython-36.pyc
-│   ├── main.cpython-36.pyc
-│   ├── nimbusdisplay.cpython-36.pyc
-│   ├── terraformhandler.cpython-36.pyc
-│   └── utils.cpython-36.pyc
-├── README.md
-├── runtest.sh
-├── terraform
-│   ├── main.tf
-│   └── variables.tf
-├── terraformhandler.py
-├── test.sh
-├── TODO
-└── utils.py
+├── aws.py  
+├── LICENSE  
+├── main.py  
+├── nimbusdisplay.py  
+├── README.md  
+├── runtest.sh  
+├── terraform  
+│   ├── main.tf  
+│   └── variables.tf  
+├── terraformhandler.py  
+├── test.sh  
+├── TODO  
+└── utils.py  
 
