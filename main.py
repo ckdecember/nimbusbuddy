@@ -3,6 +3,9 @@ Core control module for nimbus buddy
 
 """
 
+__version__ = '0.4'
+__author__ = 'Carroll Kong'
+
 import argparse
 import logging
 import unittest
@@ -62,5 +65,3 @@ if  __name__ =='__main__':
 def test_displayarg(self):
     pass
 
-__version__ = '0.4'
-__author__ = 'Carroll Kong'
