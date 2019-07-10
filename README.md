@@ -45,11 +45,11 @@ A valid AWS account and proper passing of credentials is required for this appli
 
 You can either set three AWS environment variables with the proper credentials or you can run "aws configure"
 
-``
+```  
 export AWS_ACCESS_KEY_ID=[ACCESSKEY]  
 export AWS_SECRET_ACCESS_KEY=[SECRETACCESSKEY]  
 export AWS_DEFAULT_REGION=[DEFAULTREGION]  
-``  
+```  
   
 # Command Line
 ``python main.py [command] [region] --ami=[AMI-OVERRIDE]``  
