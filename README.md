@@ -28,7 +28,8 @@ I plan to extend the code so it will work with other cloud technologies, so I'd 
 - tabulate
 
 # Installation on Ubuntu 18
-``
+
+```
 sudo apt install awscli  
 aws configure  
 sudo apt install python3-pip  
@@ -36,8 +37,8 @@ sudo apt install python3-pip
 echo "boto3" >> requirements.txt  
 echo "tabulate" >> requirements.txt  
   
-pip install -r requirements.txt
-``
+pip install -r requirements.txt  
+```
 
 # Configuration
 A valid AWS account and proper passing of credentials is required for this application to work.
