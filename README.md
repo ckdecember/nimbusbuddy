@@ -27,7 +27,8 @@ I plan to extend the code so it will work with other cloud technologies, so I'd 
 - boto3
 - tabulate
 
-# Installation
+# Installation on Ubuntu 18
+``
 sudo apt install awscli  
 aws configure  
 sudo apt install python3-pip  
@@ -35,20 +36,22 @@ sudo apt install python3-pip
 echo "boto3" >> requirements.txt  
 echo "tabulate" >> requirements.txt  
   
-pip install -r requirements.txt  
+pip install -r requirements.txt
+``
 
 # Configuration
 A valid AWS account and proper passing of credentials is required for this application to work.
 
 You can either set three AWS environment variables with the proper credentials or you can run "aws configure"
 
+``
 export AWS_ACCESS_KEY_ID=[ACCESSKEY]  
 export AWS_SECRET_ACCESS_KEY=[SECRETACCESSKEY]  
 export AWS_DEFAULT_REGION=[DEFAULTREGION]  
-  
+``  
   
 # Command Line
-python main.py [command] [region] --ami=[AMI-OVERRIDE]  
+``python main.py [command] [region] --ami=[AMI-OVERRIDE]``  
 (--ami is optional)  
 
 valid commands are "display" and "terraform".  
@@ -60,7 +63,7 @@ Terraform will output your AWS network into a main.tf and variable.tf file.
 --targetregion changes the "region" in the terraform configuration so you can target a different region than the one you backed up from.
 
 Example:  
-python main.py terraform us-west-1  
+``python main.py terraform us-west-1  ``
 This will login to your us-west-1 region, extract the configuration, and output a terraform configuration file that matches your us-west-1 cloud.  
 
 # File Structure
