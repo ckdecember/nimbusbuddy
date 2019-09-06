@@ -26,21 +26,24 @@ class NimbusBuddy:
     def __init__(self):
         pass
 
+
 def main():
     parser = argparse.ArgumentParser(description="Cloud Visualization and Backup Tool")
-    parser.add_argument('command', help='valid commands: display, terraform')
+    parser.add_argument("command", help="valid commands: display, terraform")
 
-    parser.add_argument('region', help="Current working AWS Region e.g.  us-west-1")
-    parser.add_argument('--targetregion', help="Destination AWS Region for migration")
-    parser.add_argument('--ami', help="Override AMI codes for region to region migration in terraform")
+    parser.add_argument("region", help="Current working AWS Region e.g.  us-west-1")
+    parser.add_argument("--targetregion", help="Destination AWS Region for migration")
+    parser.add_argument(
+        "--ami", help="Override AMI codes for region to region migration in terraform"
+    )
 
     args = parser.parse_args()
 
     nd = nimbusdisplay.Display(args.region)
 
-    if args.command == 'display':
+    if args.command == "display":
         nd.display()
-    elif args.command == 'terraform':
+    elif args.command == "terraform":
         ami = None
         if args.ami:
             ami = args.ami
@@ -48,19 +51,14 @@ def main():
             tf = terraformhandler.TerraformHandler(args.region, args.targetregion, ami)
             tf.terraformDump()
         elif args.region:
-            print ('no target region set, defaulting to region = targetregion')
+            print("no target region set, defaulting to region = targetregion")
             tf = terraformhandler.TerraformHandler(args.region, args.region, ami)
             tf.terraformDump()
         else:
-            print ('need args')
-    elif args.command == 'test':
+            print("need args")
+    elif args.command == "test":
         nd.VPCandSubnets()
 
-if  __name__ =='__main__':
+
+if __name__ == "__main__":
     main()
-
-def test_displayarg(self):
-    pass
-
-__version__ = '0.4'
-__author__ = 'Carroll Kong'

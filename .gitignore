@@ -1,4 +1,8 @@
-# Terraform stuff
+# TODO
+TODO
+
+
+# Terraform 
 .terraform/
 terraform.tfstate*
 *.tfstate
